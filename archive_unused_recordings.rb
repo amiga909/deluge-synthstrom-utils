@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
+require 'fileutils'
 
 class Cleaner
-	require 'fileutils'
+	
 	@@usedRecs = []
 	@@unusedRecs = []
 	@@recs = []
