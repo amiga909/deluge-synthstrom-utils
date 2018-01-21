@@ -1,11 +1,7 @@
+#!/usr/bin/env ruby
 
 class Cleaner
-	#!/usr/bin/env ruby
-
 	require 'fileutils'
-
-
-
 	@@usedRecs = []
 	@@unusedRecs = []
 	@@recs = []
@@ -18,7 +14,6 @@ class Cleaner
 		@includeResample = args.match("exclude-resample") != nil ? false : true
 		@includeUserSamples = args.match("include-user") != nil ? true : false
 
-
 		class << self
 			attr_accessor :isDryRun
 		end 	
@@ -29,19 +24,19 @@ class Cleaner
 	def getFiles
 
 		Dir[ "./SAMPLES/RECORD/*.{WAV,wav}"].each do |f|
-						@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
-		end
-		Dir[ "./SAMPLES/RESAMPLE/*.{WAV,wav}"].each do |f|
-
 			@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
 		end
-				Dir[ "./*/*.{XML,xml}"].each do |f|
+		Dir[ "./SAMPLES/RESAMPLE/*.{WAV,wav}"].each do |f|
+			@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
+		end
+		Dir[ "./*/*.{XML,xml}"].each do |f|
 			parseFile(f) unless File.directory? f
 		end
-				@@usedRecs.uniq!
+		
+		@@usedRecs.uniq!
 		@@recs.uniq!
 		@@unusedRecs = @@recs -  @@usedRecs
-			end
+	end
 
 	def display
 		p "To Archive: #{@@unusedRecs }"
@@ -49,7 +44,7 @@ class Cleaner
 usedRecs: #{@@usedRecs.size} |
 unusedRecs: #{@@unusedRecs.size}
  	}.gsub(/\s+/, " ").strip
-			end 
+	end 
 
 	def archive 
 		cnt = 0
@@ -68,7 +63,7 @@ unusedRecs: #{@@unusedRecs.size}
 		File.foreach(path) do |f|
 			match = f.match(/(SAMPLES\/RECORD\/REC[0-9]+\.WAV)/)
 			@@usedRecs.push(match[0]) if match
-						match = f.match(/(SAMPLES\/RESAMPLE\/REC[0-9]+\.WAV)/)
+			match = f.match(/(SAMPLES\/RESAMPLE\/REC[0-9]+\.WAV)/)
 			@@usedRecs.push(match[0]) if match
 		end
 
