@@ -1,8 +1,11 @@
-#!/usr/bin/env ruby
-require 'fileutils'
 
-class Cleaner
-	
+class RecordingCleaner
+	#!/usr/bin/env ruby
+
+	require 'fileutils'
+
+
+
 	@@usedRecs = []
 	@@unusedRecs = []
 	@@recs = []
@@ -15,6 +18,7 @@ class Cleaner
 		@includeResample = args.match("exclude-resample") != nil ? false : true
 		@includeUserSamples = args.match("include-user") != nil ? true : false
 
+
 		class << self
 			attr_accessor :isDryRun
 		end 	
@@ -25,19 +29,19 @@ class Cleaner
 	def getFiles
 
 		Dir[ "./SAMPLES/RECORD/*.{WAV,wav}"].each do |f|
-			@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
+						@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
 		end
 		Dir[ "./SAMPLES/RESAMPLE/*.{WAV,wav}"].each do |f|
+
 			@@recs.push(f.sub('./SAMPLES', 'SAMPLES')) unless File.directory? f
 		end
-		Dir[ "./*/*.{XML,xml}"].each do |f|
+				Dir[ "./*/*.{XML,xml}"].each do |f|
 			parseFile(f) unless File.directory? f
 		end
-		
-		@@usedRecs.uniq!
+				@@usedRecs.uniq!
 		@@recs.uniq!
 		@@unusedRecs = @@recs -  @@usedRecs
-	end
+			end
 
 	def display
 		p "To Archive: #{@@unusedRecs }"
@@ -45,16 +49,17 @@ class Cleaner
 usedRecs: #{@@usedRecs.size} |
 unusedRecs: #{@@unusedRecs.size}
  	}.gsub(/\s+/, " ").strip
-	end 
+			end 
 
 	def archive 
 		cnt = 0
 		@@unusedRecs.each do |f|
 			f = './'+f
 			if File.exist?(f)
-				FileUtils::mkdir_p './_ARCHIVED/'+f
-				cnt = cnt + 1
-				FileUtils.mv(f, './_ARCHIVED/'+f) 
+				 dir = File.dirname(f)
+				 FileUtils::mkdir_p './_ARCHIVED/' + dir
+				 cnt = cnt + 1
+				 FileUtils.mv(f, './_ARCHIVED/' + dir) 
 			end 	
 		end 
 		p "Done. Archived #{cnt} Files."
@@ -62,16 +67,21 @@ unusedRecs: #{@@unusedRecs.size}
 
 	def parseFile path
 		File.foreach(path) do |f|
+			if ! f.valid_encoding?
+			  s = f.encode("UTF-16be", :invalid=>:replace, :replace=>"?").encode('UTF-8')
+			  s.gsub(/dr/i,'med')
+			  f = s
+			end
 			match = f.match(/(SAMPLES\/RECORD\/REC[0-9]+\.WAV)/)
 			@@usedRecs.push(match[0]) if match
-			match = f.match(/(SAMPLES\/RESAMPLE\/REC[0-9]+\.WAV)/)
+						match = f.match(/(SAMPLES\/RESAMPLE\/REC[0-9]+\.WAV)/)
 			@@usedRecs.push(match[0]) if match
 		end
 
 	end
 
 end
-c = Cleaner.new(true)
+c = RecordingCleaner.new(true)
 
 p c 
 
