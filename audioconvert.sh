@@ -15,17 +15,30 @@ minSampleRate=44100
 totalIncrease=0
 count=0
 convCount=0
-skippedCount=0
+skippedCount=0 
 
 
-if ! [ -x "$(command -v afinfo)" ]; then
-	echo 'Error: afinfo is not installed.'  
-   	exit 1
-fi
-if ! [ -x "$(command -v afconvert)" ]; then
-	echo 'Error: afconvert is not installed.'  
-  	exit 1
-fi
+function libcheck {
+	if ! [ -x "$(command -v afinfo)" ]; then
+		echo 'Error: afinfo is not installed.'  
+	   	exit 1
+	fi
+	if ! [ -x "$(command -v afconvert)" ]; then
+		echo 'Error: afconvert is not installed.'  
+	  	exit 1
+	fi
+} 
+
+# root dir of deluge
+function dirCheck {
+	path=""
+	if  ! [ -d "${PWD}/SAMPLES/RESAMPLE" ]; then
+		echo "Error. SAMPLES dir not found in ${PWD}. Place script in root directory of SD card."
+		exit 1
+	fi
+	cd "${PWD}/SAMPLES"
+}
+
 
 if [ "$1" != "no-debug" ]; then 
 	echo '-----------------TEST_MODE-----------------'
@@ -35,9 +48,10 @@ else
 fi
 
 
-if [ "$2" != "" ]; then 
-	echo "$2"
-fi
+
+# pre routines
+libcheck
+dirCheck
 
  
 for f in $(find ./ -type f -iname '*.wav'); do
@@ -55,17 +69,20 @@ for f in $(find ./ -type f -iname '*.wav'); do
 
 	
 	invalidWav="$(echo "$afInfo" | grep -o 'AudioFileOpenURL failed' )" 
-	sampleRate="$(echo "$afInfo" | grep -o 'Data format: .*' | grep -o '[0-9]\{3,7\} Hz' | grep -o '[0-9]\{3,7\}' )"
-	fishyMp3="$(echo "$afInfo" | grep -o 'Data format: .*' | grep "Hz, '.mp3' " )"
+	dataFormat="$(echo "$afInfo" | grep -o 'Data format: .*')"
+	sampleRate="$(echo "$dataFormat"| grep -o '[0-9]\{3,7\} Hz' | grep -o '[0-9]\{3,7\}' )"
+	fishyMp3="$(echo "$dataFormat"| grep -o 'mp3')"
 
-	if [[ $sampleRate -lt $minSampleRate  || $fishyMp3 != "" ]]; then
+
+
+	if [[ $sampleRate -lt $minSampleRate || $fishyMp3 != "" ]]; then
 		size=$(stat -f%z "$f") 
 		sizeBefore=$(($size / 1024)) 
 
 		echo '------------------------'
 		echo "$f $sizeBefore KB, $sampleRate Hz)"
  
-		if [[ fishyMp3 != "" ]]; then
+		if [ "$fishyMp3" != "" ]; then
 			echo "Fishy MP3 Codec detected."
 		fi
 
@@ -88,3 +105,4 @@ done
 echo "$convCount of $count files converted, $skippedCount skipped. Total disk space increase: $totalIncrease KB"
 
 exit 1
+
