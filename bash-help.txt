@@ -1,0 +1,8 @@
+rsync -avzh /Volumes/NO\ NAME/ /[PATH]/Deluge/FULL\ 07-2018/
+
+find . -type f  -not -iname '*.wav' -and -not -iname '*.aif'
+
+find . -type f -name "._*"
+
+find . -type f -name "._*" -exec rm -rf {} \;
+ 
