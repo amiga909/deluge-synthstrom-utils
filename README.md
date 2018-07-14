@@ -1,5 +1,6 @@
 Script to remove unused samples on the Deluge SD Card
+currently only removes recordings
 
-- create a copy of the SD Card
-- place this script in the root dir 
-- a folder '_ARCHIVED' will be created where all the delete candidates are moved, paths are preserved 
+- recommended: create a backup of the SD Card first
+- place this script in the root dir of the SD card
+- all delete candidates are moved to the folder '_ARCHIVED', paths are preserved 
