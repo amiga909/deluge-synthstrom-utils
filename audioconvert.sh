@@ -1,7 +1,7 @@
 #! /bin/sh
 
-####
-# Convert all WAV files with a sample rate lower than 44hz to 44hz/16bit 
+#### 
+# Uses afconvert instead of ffmpeg
 ####
 
 
@@ -10,17 +10,32 @@ IFS='
 '
 set -f
 
+# globals
+ARG1_runmode="$1"
+if [ "$ARG1_runmode" = "" ]; then
+	ARG1_runmode="help" 
+fi
+af16bit44hz="LEI16@44100"
+af8bit44hz="UI8@44100"
+# Deluge records 44hz/24bit
+af24bit44hz="LEI24@44100"
+af32bit44hz="LEI32@44100"
+af64bit44hz="LEF64@44100"
+# default: 16 bit is usually enough
+targetFormat="LEI16@44100"
 
+lB="-----------------"
 minSampleRate=44100
 totalIncrease=0
 count=0
 convCount=0
 skippedCount=0 
+rootDirSet="0"
 
-
-function libcheck {
+# 
+libcheck() {
 	if ! [ -x "$(command -v afinfo)" ]; then
-		echo 'Error: afinfo is not installed.'  
+		echo 'Error: afinfo is not installed.'
 	   	exit 1
 	fi
 	if ! [ -x "$(command -v afconvert)" ]; then
@@ -28,81 +43,174 @@ function libcheck {
 	  	exit 1
 	fi
 } 
-
-# root dir of deluge
-function dirCheck {
-	path=""
+isRootDir() {
 	if  ! [ -d "${PWD}/SAMPLES/RESAMPLE" ]; then
-		echo "Error. SAMPLES dir not found in ${PWD}. Place script in root directory of SD card."
-		exit 1
+		echo "Note: If you want to process all files, place script in root directory of SD card."
+		echo "$lB"
+	else 
+		cd "${PWD}/SAMPLES"
+		rootDirSet="1"
 	fi
-	cd "${PWD}/SAMPLES"
+}
+clean(){
+	echo "Allowed file extensions: .wav, .aif, .aiff"
+	
+	if [ "$rootDirSet" = "0" ]; then
+		echo "Exit. Safety measure. You gotta be in the Deluge root directory." 
+		exit 1
+		 
+	fi
+
+	total=0
+	for f in $(find ./ -type f -not -iname '*.wav' -and -not -iname '*.aif' -and -not -iname '*.aiff'); do
+		echo "$lB"
+
+		size=$(stat -f%z "$f") 
+		size=$(($size / 1024))
+		displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
+
+		total=$((size+total))
+		echo "/${displayPath} | $size KB "
+		if [ "$ARG1_runmode" = "clean-fix" ]; then
+			rm $f
+			echo "Deleted."
+		fi
+
+	done	
+	
+	totalMb=$(($total / 1024))
+	echo "$lB"
+	echo "Total disk space usage: $total KB | $totalMb MB"
+	echo "Execute script with clean-fix to remove all listed files."
 }
 
 
-if [ "$1" != "no-debug" ]; then 
-	echo '-----------------TEST_MODE-----------------'
-	echo "Simulation mode. For normal mode: sh audioconvert.sh no-debug"
-else 
-	echo '----------------NORMAL_MODE----------------'	
-fi
+welcome() {
+	echo "${lB}DELUGE SAMPLE FIXER v1.0${lB}"
+	libcheck
+	isRootDir
+	if [ "$ARG1_runmode" = "discover" ]; then 
+		echo 'DISCOVER UNSUPPORTED SAMPLES'
+	elif [ "$ARG1_runmode" = "fix" ]; then
+		echo 'FIX UNSUPPORTED SAMPLES'
+	elif [ "$ARG1_runmode" = "clean" ]; then
+		clean 
+		exit 1
+
+		echo 'DISCOVER NON-AUDIO SAMPLES'
+	elif [ "$ARG1_runmode" = "clean-fix" ]; then
+		clean 
+		exit 1
+
+		echo 'REMOVE NON-AUDIO SAMPLES'			
+	elif [ "$ARG1_runmode" = "resample" ]; then	
+		echo 'RESAMPLE'
+		echo "Sorry, not yet implemented."
+	else 
+		echo 'HELP'
+cat << EOF
+Run script with 'sh script.sh discover'
+
+<discover>
+ 	Lists WAV samples Synthstrom Deluge might not be able to load.
+ 	Targets all samples with a sample rate below 44Hz. Or having other oddities.
+ 	Run 'sh script.sh fix' if the list looks reasonable. 
+<fix>
+ 	Fix samples. Discovered WAV files get converted to 44Hz. 
+ 	Source bit depth is retained (24, 16 or 8), defaults to 16. 
+ 	Backup your data before using this function. Data will be overwritten. 
+<clean>
+ 	Lists non audio files. 
+<clean-fix>
+ 	Clears non audio files.  	
+EOF
+		exit 1
+	fi
+}
 
 
 
-# pre routines
-libcheck
-dirCheck
+welcome 
+
 
  
 for f in $(find ./ -type f -iname '*.wav'); do
 	count=$((count+1))
+	displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
 
 	{  
 	    afInfo="$(afinfo "$f")"
 
 	} || {  
-		echo '------------------------'
-	 	echo "Error. Invalid file. Skip $f"
+		echo "$lB"
+	 	echo "Error. Invalid file. Skip $displayPath"
 		skippedCount=$((skippedCount+1))
 		continue 
 	}
 
-	
-	invalidWav="$(echo "$afInfo" | grep -o 'AudioFileOpenURL failed' )" 
 	dataFormat="$(echo "$afInfo" | grep -o 'Data format: .*')"
+	bitDepthInfo="$(echo "$afInfo" | grep -o 'source bit depth: I.*')"
 	sampleRate="$(echo "$dataFormat"| grep -o '[0-9]\{3,7\} Hz' | grep -o '[0-9]\{3,7\}' )"
+	bitDepth="$(echo "$bitDepthInfo"| grep -o '[0-9]\{1,2\}')"
 	fishyMp3="$(echo "$dataFormat"| grep -o 'mp3')"
+	fishyBits="$(echo "$dataFormat" | grep -o ' 0 bits')"
 
-
-
-	if [[ $sampleRate -lt $minSampleRate || $fishyMp3 != "" ]]; then
+	if [[ $sampleRate -lt $minSampleRate || $fishyMp3 != "" || $fishyBits != "" ]]; then
 		size=$(stat -f%z "$f") 
 		sizeBefore=$(($size / 1024)) 
 
-		echo '------------------------'
-		echo "$f $sizeBefore KB, $sampleRate Hz)"
+		echo "$lB"
+		echo "/${displayPath} | $sizeBefore KB | $sampleRate Hz"
  
 		if [ "$fishyMp3" != "" ]; then
-			echo "Fishy MP3 Codec detected."
+			echo "Fishy MP3 Codec detected:"
+			echo "$(echo "$dataFormat" | sed -e 's/ //g')"  
 		fi
 
-		if [ "$1" = "no-debug" ]; then
+		if [ "$fishyBits" != "" ]; then
+			echo "Fishy bits/channel detected:"
+			echo "$(echo "$dataFormat" | sed -e 's/ //g')"  
+			echo " "
+		fi
+
+		if [ "$ARG1_runmode" = "fix" ]; then
 			convCount=$((convCount+1))
-	    	afconvert -o "$f" -f 'WAVE' -d I16@44100 "$f"
+			if [ "$bitDepth" = "16" ]; then
+				targetFormat="$af16bit44hz"
+			elif [ "$bitDepth" = "8" ]; then
+				targetFormat="$af8bit44hz"
+			elif [ "$bitDepth" = "24" ]; then
+				targetFormat="$af24bit44hz"
+			elif [ "$bitDepth" = "64" ]; then
+				targetFormat="$af64bit44hz"
+			else
+				targetFormat="$af16bit44hz"	
+				bitDepth="16"
+			fi
+
+	    	afconvert -o "$f" -f 'WAVE' -d "$targetFormat" "$f"
 	  		size=$(stat -f%z "$f") 
 			size=$(($size / 1024))
 			increase=$((size-sizeBefore))
 			totalIncrease=$((increase+totalIncrease))
 
-	  		echo "Converted: $size KB"
+	  		echo "=> Converted $bitDepth bits | 44100 Hz | $size KB"
 	   else 
-	   		echo "Converted in normal mode only"
+	   		echo "=> Conversion candidate"
 	   fi
 	fi
     
 done
 
-echo "$convCount of $count files converted, $skippedCount skipped. Total disk space increase: $totalIncrease KB"
+echo "$lB"
+echo "$convCount of $count files converted, $skippedCount skipped."
+totalIncreaseMb=$(($totalIncrease / 1024))
+echo "Total disk space usage: $totalIncrease KB | $totalIncreaseMb MB"
+echo "$lB"
 
 exit 1
+
+getAfFormat(bits){
+
+}
 
