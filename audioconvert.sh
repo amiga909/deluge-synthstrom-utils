@@ -48,7 +48,7 @@ isRootDir() {
 		echo "Note: If you want to process all files, place script in root directory of SD card."
 		echo "$lB"
 	else 
-		cd "${PWD}/SAMPLES"
+		cd "${PWD}/SAMPLES" || exit
 		rootDirSet="1"
 	fi
 }
@@ -72,7 +72,7 @@ clean(){
 		total=$((size+total))
 		echo "/${displayPath} | $size KB "
 		if [ "$ARG1_runmode" = "clean-fix" ]; then
-			rm $f
+			rm "$f"
 			echo "Deleted."
 		fi
 
@@ -129,9 +129,7 @@ EOF
 }
 
 
-
 welcome 
-
 
  
 for f in $(find ./ -type f -iname '*.wav'); do
@@ -169,8 +167,7 @@ for f in $(find ./ -type f -iname '*.wav'); do
 
 		if [ "$fishyBits" != "" ]; then
 			echo "Fishy bits/channel detected:"
-			echo "$(echo "$dataFormat" | sed -e 's/ //g')"  
-			echo " "
+			echo "$(echo "$dataFormat" | sed -e 's/ //g')" 
 		fi
 
 		if [ "$ARG1_runmode" = "fix" ]; then
@@ -181,6 +178,8 @@ for f in $(find ./ -type f -iname '*.wav'); do
 				targetFormat="$af8bit44hz"
 			elif [ "$bitDepth" = "24" ]; then
 				targetFormat="$af24bit44hz"
+			elif [ "$bitDepth" = "32" ]; then
+				targetFormat="$af32bit44hz"	
 			elif [ "$bitDepth" = "64" ]; then
 				targetFormat="$af64bit44hz"
 			else
@@ -209,8 +208,3 @@ echo "Total disk space usage: $totalIncrease KB | $totalIncreaseMb MB"
 echo "$lB"
 
 exit 1
-
-getAfFormat(bits){
-
-}
-
