@@ -7,6 +7,7 @@
 - Mac OSX, (Linux)
 
 ### Want a tidy sample library? 
+- Get rid of "UNSUPPORTED" messages in the Synthstrom Deluge file browser
 - Place this script in the root directory of the SD Card
 - Consider a backup before running any write commands
 - Supported audio file extensions: .wav, .aif, .aiff
