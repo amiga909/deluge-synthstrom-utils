@@ -1,20 +1,20 @@
 
-#Synthstrom Deluge maintenance utils
-**Table of Contents**
-
-[TOC]
-##samplefixer.sh
-#####Want a tidy sample library? 
+# Synthstrom Deluge maintenance utils
+*
+## samplefixer.sh
+### Want a tidy sample library? 
 - Place this script in the root directory of the SD Card
 - Consider a backup before running any write commands
 - Supported audio file extensions: .wav, .aif, .aiff
 
-#####Use cases
+### Use cases
 - Analyze all data 
 `sh samplefixer.sh convert_clean`
 
 - Fix all data
 `sh samplefixer.sh convert_clean_write`
+
+### Options
 
 Default path is the Deluge SAMPLES folder. You may pass a directory as an optional parameter. Pass it as relative path, e.g. `sh samplefixer.sh clean RESAMPLE/`, to narrow the search space. 
 
