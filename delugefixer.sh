@@ -236,7 +236,7 @@ welcome() {
 		echo 'DELETE NON AUDIO FILES (NO BACKUP)'
 		echo "${lB}"
 		clean
-	elif [ "$ARG1_runmode" = "convert_and_clean" ]; then
+	elif [ "$ARG1_runmode" = "convert_clean" ]; then
 		echo 'DISCOVER UNSUPPORTED SAMPLES'
 		echo "${lB}"
 		convert 
@@ -244,7 +244,7 @@ welcome() {
 		echo 'DISCOVER NON AUDIO FILES'
 		echo "${lB}"
 		clean
-	elif [ "$ARG1_runmode" = "convert_and_clean_write" ]; then	
+	elif [ "$ARG1_runmode" = "convert_clean_write" ]; then	
 		IS_FILE_WRITE_MODE="1"
 		echo 'CONVERT UNSUPPORTED SAMPLES (NO BACKUP, DISK USAGE!)'
 		echo "${lB}"
@@ -257,16 +257,18 @@ welcome() {
 	else 
 		echo 'HELP'
 cat << EOF
-Some helper tools for the Synthstrom Deluge.
-Consider a backup before using this script.
+<< Want a tidy sample library? >>
+-> Place this script in the root directory of the SD Card. 
+-> Consider a backup before running any write commands. 
+
 Analyze all data: 
-'sh samplefixer.sh convert_and_clean'
+'sh samplefixer.sh convert_clean'
 Fix all data: 
-'sh samplefixer.sh convert_and_clean-write'
+'sh samplefixer.sh convert_clean_write'
  
 Default path is the Deluge SAMPLES folder. 
 You may pass a directory as an optional parameter. 
-Pass it as relative path, e.g. 'RESAMPLE/', to narrow the search space. 
+Pass it as relative path, e.g. 'sh samplefixer.sh clean RESAMPLE/', to narrow the search space. 
 
 <convert [PATH]>
 -> Analyze WAV files: Get all samples below 44kHz. Or having other oddities.
@@ -281,10 +283,11 @@ Pass it as relative path, e.g. 'RESAMPLE/', to narrow the search space.
 <clean_write [PATH]>
 -> Deletes non audio files and WAV samples Synthstrom Deluge might not be able to load. No backup!
 
-<convert_and_clean [PATH]>
--> combine both
-<convert_and_clean_write [PATH]>
--> combine both
+<convert_clean [PATH]>
+-> Hurray, combine both.
+
+<convert_clean_write [PATH]>
+-> Bonkers, combine both.
 
 EOF
 	fi
