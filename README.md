@@ -2,6 +2,10 @@
 # Synthstrom Deluge maintenance utils
 
 ## samplefixer.sh
+
+### Platforms
+- Mac OSX, (Linux)
+
 ### Want a tidy sample library? 
 - Place this script in the root directory of the SD Card
 - Consider a backup before running any write commands
@@ -33,6 +37,9 @@ Delete non audio files and WAV samples Synthstrom Deluge might not be able to lo
 
 
 ## archive_unused_recordings.rb
+
+### Platforms
+- Mac OSX, (Linux)
 
 Script to remove unused samples on the Deluge SD Card
 currently only removes recordings
