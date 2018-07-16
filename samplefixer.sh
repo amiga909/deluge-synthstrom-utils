@@ -257,37 +257,32 @@ welcome() {
 	else 
 		echo 'HELP'
 cat << EOF
-<< Want a tidy sample library? >>
--> Place this script in the root directory of the SD Card. 
--> Consider a backup before running any write commands. 
+#####Want a tidy sample library? 
+- Place this script in the root directory of the SD Card
+- Consider a backup before running any write commands
+- Supported audio file extensions: .wav, .aif, .aiff
 
-Analyze all data: 
-'sh samplefixer.sh convert_clean'
-Fix all data: 
-'sh samplefixer.sh convert_clean_write'
- 
-Default path is the Deluge SAMPLES folder. 
-You may pass a directory as an optional parameter. 
-Pass it as relative path, e.g. 'sh samplefixer.sh clean RESAMPLE/', to narrow the search space. 
+#####Use cases
+- Analyze all data 
+`sh samplefixer.sh convert_clean`
 
-<convert [PATH]>
--> Analyze WAV files: Get all samples below 44kHz. Or having other oddities.
+- Fix all data
+`sh samplefixer.sh convert_clean_write`
 
-<clean [PATH]>
--> List non audio files and WAV samples Synthstrom Deluge might not be able to load.
+Default path is the Deluge SAMPLES folder. You may pass a directory as an optional parameter. Pass it as relative path, e.g. `sh samplefixer.sh clean RESAMPLE/`, to narrow the search space. 
 
-<convert_write [PATH]>
--> Analyze WAV files: Get all samples below 44kHz. Or having other oddities.
--> Convert samples to 44kHz/16bit. No backup! Attention, disk usage might increase a lot. 
+- **convert [PATH]**
+List WAV files below 44kHz. Inspect for fishy data formats as well.
 
-<clean_write [PATH]>
--> Deletes non audio files and WAV samples Synthstrom Deluge might not be able to load. No backup!
+- **clean [PATH]**
+List non-audio files and WAV samples Synthstrom Deluge might not be able to load.
 
-<convert_clean [PATH]>
--> Hurray, combine both.
+- **convert_write [PATH]**
+Convert WAV files lower than 44kHz to 44kHz/16bit. No backup! Attention, disk usage might increase a lot.
 
-<convert_clean_write [PATH]>
--> Bonkers, combine both.
+- **clean_write [PATH]**
+Delete non audio files and WAV samples Synthstrom Deluge might not be able to load. No backup!
+
 
 EOF
 	fi
