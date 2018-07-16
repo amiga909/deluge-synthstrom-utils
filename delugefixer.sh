@@ -12,9 +12,13 @@ set -f
 
 # globals
 ARG1_runmode="$1"
-if [ "$ARG1_runmode" = "" ]; then
-	ARG1_runmode="help" 
+ARG2_path="$2"
+if [ -z "$2" ]; then
+	ARG2_path="./" 
 fi
+WORKING_DIR="$ARG2_path"
+IS_FILE_WRITE_MODE="0"
+
 af16bit44hz="LEI16@44100"
 af8bit44hz="UI8@44100"
 # Deluge records 44hz/24bit
@@ -30,7 +34,8 @@ totalIncrease=0
 count=0
 convCount=0
 skippedCount=0 
-rootDirSet="0"
+
+
 
 
 libcheck() {
@@ -43,21 +48,36 @@ libcheck() {
 	  	exit 1
 	fi
 } 
-isRootDir() {
+workingDirCheck() {
+
+	# allow to place script in Deluge root, rather than samples folder
 	if  ! [ -d "${PWD}/SAMPLES/RESAMPLE" ]; then
 		echo "Note: If you want to process all files, place script in root directory of SD card."
 		echo "$lB"
 	else 
 		cd "${PWD}/SAMPLES" || exit
-		rootDirSet="1"
 	fi
+
+
+	# let user input with or without slashes
+	if [ -z "$2" ]; then
+		inputDirNoSlash="$(echo "${ARG2_path}" | sed -E 's/^\///g' | sed -E 's/\/$//g')"
+		if ! [ -d "${inputDirNoSlash}/" ]; then
+			echo "Error. Illegal Path argument. ${PWD}/${inputDirNoSlash} does not exist"
+			exit 
+		else 
+			WORKING_DIR="$inputDirNoSlash"
+	fi 
+	  
+	fi
+	
 }
 clean(){
 	total=0
 	echo "Listing non-audio samples by extension."
 	echo "Allowed file extensions: .wav, .aif, .aiff"
 	
-	for f in $(find ./ -type f -not -iname '*.wav' -and -not -iname '*.aif' -and -not -iname '*.aiff'); do
+	for f in $(find "$WORKING_DIR" -type f -not -iname '*.wav' -and -not -iname '*.aif' -and -not -iname '*.aiff'); do
 		echo "$lB"
 
 		size=$(stat -f%z "$f") 
@@ -65,18 +85,19 @@ clean(){
 		displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
 
 		total=$((size+total))
-		echo "/${displayPath} | $size KB "
+		echo "${displayPath} | $size KB "
 		echo "Invalid file type"
-		if [ "$ARG1_runmode" = "fix" ]; then
-			rm "$f"
+		if [ "$IS_FILE_WRITE_MODE" = "1" ]; then
+			rm -f "$f"
 			echo "Deleted."
 		fi
 	done
 
 	echo "$lB"
+	echo "Total disk space usage: $total KB"
 
 	echo "Testing audio files."
-	for f in $(find ./ -type f -iname '*.wav' -or -iname '*.aif' -or -iname '*.aiff'); do
+	for f in $(find "$WORKING_DIR" -type f -iname '*.wav' -or -iname '*.aif' -or -iname '*.aiff'); do
 		isValid="1"
 
 		size=$(stat -f%z "$f") 
@@ -107,7 +128,7 @@ clean(){
 		 	total=$((size+total))
 			echo "/${displayPath} | $size KB "
 		
-			if [ "$ARG1_runmode" = "fix" ]; then
+			if [ "$IS_FILE_WRITE_MODE" = "1" ]; then
 				rm "$f"
 				echo "Deleted."
 			fi	
@@ -121,7 +142,7 @@ clean(){
 
 
 convert(){
-	for f in $(find ./ -type f -iname '*.wav'); do
+	for f in $(find "$WORKING_DIR" -type f -iname '*.wav'); do
 		count=$((count+1))
 		displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
 
@@ -130,6 +151,7 @@ convert(){
 
 		} || {  
 			echo "$lB"
+			echo "${displayPath}"
 		 	echo "Error. Invalid file. Skip $displayPath"
 			skippedCount=$((skippedCount+1))
 			continue 
@@ -147,7 +169,7 @@ convert(){
 			sizeBefore=$(($size / 1024)) 
 
 			echo "$lB"
-			echo "/${displayPath} | $sizeBefore KB | $sampleRate Hz"
+			echo "${displayPath} | $sizeBefore KB | $sampleRate Hz ${bitDepth}bit"
 	 
 			if [ "$fishyMp3" != "" ]; then
 				echo "Fishy MP3 Codec detected:"
@@ -159,22 +181,11 @@ convert(){
 				echo "$(echo "$dataFormat" | sed -e 's/ //g')" 
 			fi
 
-			if [ "$ARG1_runmode" = "fix" ]; then
+			if [ "$IS_FILE_WRITE_MODE" = "fix" ]; then
 				convCount=$((convCount+1))
-				if [ "$bitDepth" = "16" ]; then
-					targetFormat="$af16bit44hz"
-				elif [ "$bitDepth" = "8" ]; then
-					targetFormat="$af8bit44hz"
-				elif [ "$bitDepth" = "24" ]; then
-					targetFormat="$af24bit44hz"
-				elif [ "$bitDepth" = "32" ]; then
-					targetFormat="$af32bit44hz"	
-				elif [ "$bitDepth" = "64" ]; then
-					targetFormat="$af64bit44hz"
-				else
-					targetFormat="$af16bit44hz"	
-					bitDepth="16"
-				fi
+				# saving disk space with lower original bit depth does not seem to work well..
+				targetFormat="$af16bit44hz"	
+				bitDepth="16"
 
 		    	afconvert -o "$f" -f 'WAVE' -d "$targetFormat" "$f"
 		  		size=$(stat -f%z "$f") 
@@ -182,7 +193,7 @@ convert(){
 				increase=$((size-sizeBefore))
 				totalIncrease=$((increase+totalIncrease))
 
-		  		echo "=> Converted $bitDepth bits | 44100 Hz | $size KB"
+		  		echo "=> Converted to: $size KB | 44100 Hz 16 bit"
 		   else 
 		   		echo "=> Conversion candidate"
 		   fi
@@ -202,39 +213,79 @@ convert(){
 welcome() {
 	echo "${lB}DELUGE SAMPLE FIXER${lB}"
 	libcheck
-	isRootDir
-	if [ "$ARG1_runmode" = "discover" ]; then 
+	workingDirCheck
+
+	echo "Processing files in ${PWD}/${inputDirNoSlash}"
+	echo "${lB}"
+	
+	if [ "$ARG1_runmode" = "convert" ]; then 
 		echo 'DISCOVER UNSUPPORTED SAMPLES'
 		echo "${lB}"
-		#convert 
+		convert 
+	elif [ "$ARG1_runmode" = "clean" ]; then
 		echo 'DISCOVER NON AUDIO FILES'
 		echo "${lB}"
 		clean
-	elif [ "$ARG1_runmode" = "fix" ]; then
-		if [ "$rootDirSet" = "0" ]; then
-			echo "Exit. Safety measure. You gotta be in the Deluge root directory." 
-			exit 1
-		fi
-		echo 'CONVERT UNSUPPORTED SAMPLES'
+	elif [ "$ARG1_runmode" = "convert_write" ]; then
+		IS_FILE_WRITE_MODE="1"
+		echo 'CONVERT UNSUPPORTED SAMPLES (NO BACKUP, DISK USAGE!)'
 		echo "${lB}"
-		#convert
-		echo 'DELETE NON AUDIO FILES'
+		convert 
+	elif [ "$ARG1_runmode" = "clean_write" ]; then	
+		IS_FILE_WRITE_MODE="1"
+		echo 'DELETE NON AUDIO FILES (NO BACKUP)'
 		echo "${lB}"
 		clean
+	elif [ "$ARG1_runmode" = "convert_and_clean" ]; then
+		echo 'DISCOVER UNSUPPORTED SAMPLES'
+		echo "${lB}"
+		convert 
+		echo "${lB}"
+		echo 'DISCOVER NON AUDIO FILES'
+		echo "${lB}"
+		clean
+	elif [ "$ARG1_runmode" = "convert_and_clean_write" ]; then	
+		IS_FILE_WRITE_MODE="1"
+		echo 'CONVERT UNSUPPORTED SAMPLES (NO BACKUP, DISK USAGE!)'
+		echo "${lB}"
+		convert 
+		echo "${lB}"
+		echo 'DELETE NON AUDIO FILES (NO BACKUP)'
+		echo "${lB}"
+		clean
+		
 	else 
 		echo 'HELP'
 cat << EOF
 Some helper tools for the Synthstrom Deluge.
 Consider a backup before using this script.
-First try in simulation mode 'sh samplefixer.sh discover'
+Analyze all data: 
+'sh samplefixer.sh convert_and_clean'
+Fix all data: 
+'sh samplefixer.sh convert_and_clean-write'
+ 
+Default path is the Deluge SAMPLES folder. 
+You may pass a directory as an optional parameter. 
+Pass it as relative path, e.g. 'RESAMPLE/', to narrow the search space. 
 
-<discover PATH>
- 	Lists non audio files and WAV samples Synthstrom Deluge might not be able to load.
- 	Targets all samples with a sample rate below 44Hz. Or having other oddities.
-<fix PATH>
- 	Remove non audio files and convert invalid samples. Discovered WAV files get converted to 44Hz. No backup.
- 	Source bit depth is retained (24, 16 or 8), defaults to 16. 
- 	Backup your data before using this function. Data will be overwritten. 
+<convert [PATH]>
+-> Analyze WAV files: Get all samples below 44kHz. Or having other oddities.
+
+<clean [PATH]>
+-> List non audio files and WAV samples Synthstrom Deluge might not be able to load.
+
+<convert_write [PATH]>
+-> Analyze WAV files: Get all samples below 44kHz. Or having other oddities.
+-> Convert samples to 44kHz/16bit. No backup! Attention, disk usage might increase a lot. 
+
+<clean_write [PATH]>
+-> Deletes non audio files and WAV samples Synthstrom Deluge might not be able to load. No backup!
+
+<convert_and_clean [PATH]>
+-> combine both
+<convert_and_clean_write [PATH]>
+-> combine both
+
 EOF
 	fi
 }
