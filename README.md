@@ -1,6 +1,6 @@
 
 # Synthstrom Deluge maintenance utils
-*
+
 ## samplefixer.sh
 ### Want a tidy sample library? 
 - Place this script in the root directory of the SD Card
