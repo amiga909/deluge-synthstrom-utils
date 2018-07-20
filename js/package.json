@@ -1,0 +1,7 @@
+{
+ "name": "testcodesandbox",
+ "version": "1",
+ "dependencies": {
+  "shelljs": "^0.8.2"
+ }
+}
