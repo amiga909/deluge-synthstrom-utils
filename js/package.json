@@ -2,6 +2,7 @@
  "name": "testcodesandbox",
  "version": "1",
  "dependencies": {
+  "json2xml": "^0.1.3",
   "shelljs": "^0.8.2",
   "x2js": "^3.2.1"
  }
