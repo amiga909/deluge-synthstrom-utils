@@ -2,6 +2,7 @@
  "name": "testcodesandbox",
  "version": "1",
  "dependencies": {
-  "shelljs": "^0.8.2"
+  "shelljs": "^0.8.2",
+  "x2js": "^3.2.1"
  }
 }

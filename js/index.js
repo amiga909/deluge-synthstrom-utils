@@ -1,25 +1,52 @@
-var shell = require('shelljs');
+const fs = require('fs');
+const shell = require('shelljs');
+var x2jsLib = require('x2js');
 
-if (!shell.which('git')) {
-  shell.echo('Sorry, this script requires git');
-  shell.exit(1);
+let x2js = new x2jsLib()
+console.log(x2js)
+
+if (!shell.which('afinfo')) {
+    shell.echo('Sorry, this function requires afinfo');
+    shell.exit(1);
 }
 
-// Copy files to release dir
-shell.rm('-rf', 'out/Release');
-shell.cp('-R', 'stuff/', 'out/Release');
+let root = '../SONGS/';
 
-// Replace macros in each .js file
-shell.cd('lib');
-shell.ls('*.js').forEach(function (file) {
-  shell.sed('-i', 'v0.1.2', 'v0.1.2', file);
+shell.cd(root);
 
-  shell.sed('-i', /.*REPLACE_LINE_WITH_MACRO.*\n/, shell.cat('macro.js'), file);
+files = fs.readdirSync(__dirname + '/' + root);
+let songSamples = shell.find('.').filter(function(file) {
+    
+    if (file.match(/\.XML$/) != null) {
+        data = String(shell.cat(file))
+
+        let json = toJson(data)
+        console.log(json)
+
+        return false;
+        let samples = shell.grep("<fileName>.*</fileName>", file)
+        //console.log(samples)
+        return file
+    }
 });
-shell.cd('..');
 
-// Run external tool synchronously
-if (shell.exec('git commit -am "Auto-commit"').code !== 0) {
-  shell.echo('Error: Git commit failed');
-  shell.exit(1);
+
+
+function toJson(xml) {
+    // cannot parse xml version statement :p
+    xml = xml.replace(/<\?xml .*\?>/, '');
+
+    // one root tag allowed, use wrapper
+    var json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap;
+
+    return json;
 }
+
+//console.log(songSamples); 
+
+
+/*
+
+if (!shell.test('-f', path)) continue; // skip if it's a regular file
+
+*/
