@@ -1,52 +1,105 @@
-const fs = require('fs');
 const shell = require('shelljs');
-var x2jsLib = require('x2js');
+const x2jsLib = require('x2js');
+const json2xml = require('json2xml');
+const x2js = new x2jsLib()
 
-let x2js = new x2jsLib()
-console.log(x2js)
+const DELUGE_PATHS = ["SONGS", "KITS", "SYNTHS"]
 
-if (!shell.which('afinfo')) {
-    shell.echo('Sorry, this function requires afinfo');
-    shell.exit(1);
+
+if (!shell.test('-d', shell.pwd() + "/SONGS")) {
+    if (shell.test('-d', shell.pwd() + "/../SONGS")) {
+        shell.cd('../');
+        shell.echo('Change directory to Deluge root');
+    } else {
+        shell.echo('Not Deluge root folder');
+    }
 }
 
-let root = '../SONGS/';
+if (!shell.which('afinfo')) {
+    shell.echo('You should install afinfo');
+}
+let samplePaths = {}
+let total = 0
+let missing = {}
+let missingCnt = 0
 
-shell.cd(root);
+DELUGE_PATHS.forEach(function(p) {
+    searchDir(p)
+})
+console.log(missing)
+console.log("total " + total + ", missing " + missingCnt)
 
-files = fs.readdirSync(__dirname + '/' + root);
-let songSamples = shell.find('.').filter(function(file) {
-    
-    if (file.match(/\.XML$/) != null) {
-        data = String(shell.cat(file))
+function searchDir(dirName) {
 
-        let json = toJson(data)
-        console.log(json)
+    shell.find(dirName + "/").filter(function(file) {
 
-        return false;
-        let samples = shell.grep("<fileName>.*</fileName>", file)
-        //console.log(samples)
-        return file
+        if (file.match(/\.XML$/) != null) {
+            let fileName = String(file)
+            let data = String(shell.cat(file))
+            let obj = toJson(data)
+
+            extractFileNames(obj, samplePaths, fileName)
+        }
+    });
+
+    checkFiles()
+}
+
+
+function checkFiles() {
+    for (let song in samplePaths) {
+        let paths = samplePaths[song]
+        paths.forEach(function(path) {
+            total++
+            path = __dirname + "/../" + path
+            if (!shell.test('-f', path)) {
+                missingCnt++
+                if (missing[song]) {
+                    missing[song].push(path)
+                } else {
+                    missing[song] = [path]
+                }
+                //console.log(__dirname + "/"+path + " does not exist!")	
+            } else {
+
+            }
+
+        })
     }
-});
+}
 
+function extractFileNames(obj, stack, fileName) {
+    for (var property in obj) {
+        if (obj.hasOwnProperty(property)) {
+            if (typeof obj[property] == "object") {
+                extractFileNames(obj[property], stack, fileName);
+            } else {
+                if (property == 'fileName') {
+                    if (!stack[fileName]) {
+                        stack[fileName] = []
+                    }
+                    let path = String(obj[property])
+                    if (path)[
+                        stack[fileName].push(path)
+                    ]
+                }
+            }
+        }
+    }
+}
 
 
 function toJson(xml) {
     // cannot parse xml version statement :p
     xml = xml.replace(/<\?xml .*\?>/, '');
-
     // one root tag allowed, use wrapper
     var json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap;
 
     return json;
 }
 
-//console.log(songSamples); 
 
-
-/*
-
-if (!shell.test('-f', path)) continue; // skip if it's a regular file
-
-*/
+function toXml(json) {
+    json = JSON.parse(json);
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + json2xml(json, "\t");
+}
