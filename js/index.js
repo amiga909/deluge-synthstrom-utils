@@ -4,67 +4,170 @@ const json2xml = require('json2xml');
 const x2js = new x2jsLib()
 
 const DELUGE_PATHS = ["SONGS", "KITS", "SYNTHS"]
+const SAMPLES_PATH = "SAMPLES"
+const RED = '\x1b[31m%s\x1b[0m'
+
+/*
+FgBlack = "\x1b[30m"
+FgRed = "\x1b[31m"
+FgGreen = "\x1b[32m"
+FgYellow = "\x1b[33m"
+FgBlue = "\x1b[34m"
+FgMagenta = "\x1b[35m"
+FgCyan = "\x1b[36m"
+FgWhite = "\x1b[37m"
+*/
 
 
-if (!shell.test('-d', shell.pwd() + "/SONGS")) {
+function dirCheck() {
+    // dev hack.. 
     if (shell.test('-d', shell.pwd() + "/../SONGS")) {
         shell.cd('../');
-        shell.echo('Change directory to Deluge root');
-    } else {
-        shell.echo('Not Deluge root folder');
+        console.log('Change directory to Deluge root');
     }
+
+    // check if folders assumed in app are here
+    let missingDirs = []
+    DELUGE_PATHS.concat(SAMPLES_PATH).forEach(function(path) {
+        if (shell.test('-d', shell.pwd() + "/" + path) === false) {
+            missingDirs.push(path)
+        }
+
+    })
+
+    if (missingDirs.length != 0) {
+        console.log(RED, "Beware: Some Deluge folders are missing: " + missingDirs.join(","))
+        shell.exit()
+    }
+    /*
+    if (!shell.which('afinfo')) {
+        shell.echo('You should install afinfo');
+    }
+    */
 }
 
-if (!shell.which('afinfo')) {
-    shell.echo('You should install afinfo');
-}
-let samplePaths = {}
+let delugeXmls = {}
 let total = 0
 let missing = {}
 let missingCnt = 0
+currentDir = ''
 
-DELUGE_PATHS.forEach(function(p) {
-    searchDir(p)
-})
-console.log(missing)
-console.log("total " + total + ", missing " + missingCnt)
 
-function searchDir(dirName) {
 
+
+function init() {
+    dirCheck()
+    DELUGE_PATHS.forEach(function(path) {
+        let samples = parseFilenames(path)
+        console.log("Processing " + path + " files")
+        checkFiles(samples)
+
+    })
+}
+
+init()
+printResults()
+
+
+function printResults() {
+    console.log(RED, "Missing samples")
+    console.log(missing)
+    console.log("total " + total + ", missing " + missingCnt)
+    console.log(delugeXmls)
+}
+
+
+
+function findSample(path) {
+    let result = null
+    let parts = path.split("/")
+    //shell.echo(shell.pwd())
+    let matches = shell.find(SAMPLES_PATH).filter(function(file) {
+        return file.match(parts[parts.length - 1]);
+    });
+    if (matches && matches[0]) {
+        if (matches.length != 1) {
+            // try to match parent folder too
+            matches = shell.find(SAMPLES_PATH).filter(function(file) {
+                return file.match(parts[parts.length - 2] + '/' + parts[parts.length - 1]);
+            });
+        }
+    }
+
+    if (matches && matches.length == 1) {
+        result = matches[0]
+    } else {
+        //console.log("Could not find match for "+path)
+    }
+    //console.log("result: path "+trimSamplesPath(path)+" goes to " + result)
+    return result
+}
+
+function trimSamplesPath(path) {
+    result = path.replace(shell.pwd(), "")
+    let parts = path.split("/")
+    parts.reverse().forEach(function(part, index) {
+        if (part == SAMPLES_PATH) {
+            result = parts.slice(0, index).reverse()
+        }
+    })
+    return SAMPLES_PATH + "/" + result.join("/")
+}
+
+function parseFilenames(dirName) {
+    let samples = {}
     shell.find(dirName + "/").filter(function(file) {
-
         if (file.match(/\.XML$/) != null) {
             let fileName = String(file)
             let data = String(shell.cat(file))
             let obj = toJson(data)
 
-            extractFileNames(obj, samplePaths, fileName)
+            if (delugeXmls[dirName]) {
+                delugeXmls[fileName].push(obj)
+            } else {
+                delugeXmls[fileName] = [obj]
+            }
+
+            extractFileNames(obj, samples, fileName)
         }
     });
+    return samples
 
-    checkFiles()
 }
 
 
-function checkFiles() {
-    for (let song in samplePaths) {
-        let paths = samplePaths[song]
+function checkFiles(entries) {
+    for (let song in entries) {
+
+        let paths = entries[song]
         paths.forEach(function(path) {
+
             total++
             path = __dirname + "/../" + path
+
             if (!shell.test('-f', path)) {
                 missingCnt++
                 if (missing[song]) {
-                    missing[song].push(path)
+                    console.log("look for " + path)
+                    let found = findSample(path)
+                    missing[song].push({
+                        'path': path,
+                        'found': found
+                    })
                 } else {
-                    missing[song] = [path]
+                    missing[song] = [{
+                        'path': path,
+                        'found': null
+                    }]
                 }
-                //console.log(__dirname + "/"+path + " does not exist!")	
+
             } else {
 
             }
 
         })
+        console.log("checkFiles done")
+
     }
 }
 
