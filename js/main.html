@@ -1,6 +1,13 @@
 <!DOCTYPE html>
 <html>
-<script>window.$ = window.jQuery = require('jquery');</script>
+<head>
+    <title>Deluge - Sample Finder</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<script>
+window.$ = window.jQuery = require('jquery');
+</script>
 <script src="main.js"></script>
 <style>
 * {
@@ -28,14 +35,14 @@ h3 {
     padding: 0px;
     text-shadow: 0 0 5px #ff2d95
 }
+
 h4 {
     color: white;
     font-size: 24px;
     letter-spacing: 5px;
-    padding: 0px
-
-    text-shadow: 0 0 1px #ff2d95
+    padding: 0px text-shadow: 0 0 1px #ff2d95
 }
+
 .background-image {
     background-image: url('assets/deluge_heart.png');
     background-size: cover;
@@ -69,8 +76,9 @@ h4 {
     text-align: center;
     color: white; //display: inline; 
 }
+
 .button-container img {
-   cursor: pointer;
+    cursor: pointer;
 }
 
 .button-text {
@@ -102,13 +110,12 @@ h4 {
     <div class="background-image"></div>
     <div class="content">
         <div class="header">
-            <h1 class="header-title">DELUGE- FIND MISSING SAMPLES</h1>
+            <h1 class="header-title">DELUGE - FIND MISSING SAMPLES</h1>
             <span class="header-intro">
             <h3>Seek sample orphans and bring them home</h3>
             <h4>Press tha button to run</h4>
             </span>
         </div>
-       
         <div class="button-container" id="seek-off">
             <img id="seek-off-img" src="assets/button_offK.png">
             <div class="button-text"> </div>

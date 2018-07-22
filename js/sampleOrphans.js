@@ -159,7 +159,7 @@ function checkFiles(entries) {
 
         })
         console.log("checkFiles done")
-     
+
     }
 }
 
@@ -200,4 +200,4 @@ function toXml(json) {
 }
 
 
-module.exports =  run
+module.exports = run
