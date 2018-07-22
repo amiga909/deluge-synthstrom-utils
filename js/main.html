@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<script>window.$ = window.jQuery = require('jquery');</script>
+<script src="main.js"></script>
+<style>
+* {
+    box-sizing: border-box;
+    color: white; //#2e3830;
+    font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    text-align: center;
+}
+
+.header-title {
+    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
+}
+
+h1 {
+    letter-spacing: 5px;
+    color: #e6dbc9;
+    font-size: 42px;
+    padding: 0px
+}
+
+h3 {
+    color: white;
+    font-size: 32px;
+    letter-spacing: 5px;
+    padding: 0px;
+    text-shadow: 0 0 5px #ff2d95
+}
+h4 {
+    color: white;
+    font-size: 24px;
+    letter-spacing: 5px;
+    padding: 0px
+
+    text-shadow: 0 0 1px #ff2d95
+}
+.background-image {
+    background-image: url('assets/deluge_heart.png');
+    background-size: cover;
+    display: block;
+    filter: blur(3px);
+    -webkit-filter: blur(3px);
+    height: 500px;
+    left: 0;
+    position: fixed;
+    right: 0;
+    z-index: 1;
+}
+
+.content {
+    background-color: rgba(17, 17, 17, 0.8);
+    border-radius: 3px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+
+    top: 10px;
+    left: 0;
+    position: fixed;
+    margin-left: 20px;
+    margin-right: 20px;
+    right: 0;
+    z-index: 2;
+    padding: 5 10px;
+}
+
+.button-container {
+    position: relative;
+    text-align: center;
+    color: white; //display: inline; 
+}
+.button-container img {
+   cursor: pointer;
+}
+
+.button-text {
+    cursor: pointer;
+    color: black;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.button-container:hover {
+    position: relative;
+    text-align: center;
+    color: white;
+}
+
+.button-text:hover {
+    background: transparent;
+    color: black;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+</style>
+
+<body>
+    <div class="background-image"></div>
+    <div class="content">
+        <div class="header">
+            <h1 class="header-title">DELUGE- FIND MISSING SAMPLES</h1>
+            <span class="header-intro">
+            <h3>Seek sample orphans and bring them home</h3>
+            <h4>Press tha button to run</h4>
+            </span>
+        </div>
+       
+        <div class="button-container" id="seek-off">
+            <img id="seek-off-img" src="assets/button_offK.png">
+            <div class="button-text"> </div>
+        </div>
+        <div style="display:none" id="seek-on" class="button-container">
+            <img id="seek-on-img" src="assets/button_on.png">
+            <div class="button-text"> </div>
+        </div>
+        <br/>
+        <br/>
+    </div>
+    <div class="footer">
+    </div>
+</body>
+
+</html>
