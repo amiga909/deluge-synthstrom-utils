@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Deluge - Sample Finder</title>
+    <title>Snythstrom Deluge - Maintenance Tool - Missing Sample Fixer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
@@ -44,12 +44,13 @@ h4 {
 }
 
 .background-image {
-    background-image: url('assets/deluge_heart.png');
+    background-image: url('assets/deluge_heart_sym.png');
     background-size: cover;
+
     display: block;
     filter: blur(3px);
-    -webkit-filter: blur(3px);
-    height: 500px;
+    -webkit-filter: blur(12px);
+    height: 100%;
     left: 0;
     position: fixed;
     right: 0;
@@ -57,6 +58,7 @@ h4 {
 }
 
 .content {
+
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
@@ -74,13 +76,17 @@ h4 {
 .button-container {
     position: relative;
     text-align: center;
-    color: white; //display: inline; 
+    color: white; 
+    width: 80px;
+    margin: auto; 
 }
 
 .button-container img {
     cursor: pointer;
 }
-
+.button-container img:hover {
+    
+}
 .button-text {
     cursor: pointer;
     color: black;
@@ -96,34 +102,24 @@ h4 {
     color: white;
 }
 
-.button-text:hover {
-    background: transparent;
-    color: black;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
+ 
 </style>
 
 <body>
     <div class="background-image"></div>
     <div class="content">
         <div class="header">
-            <h1 class="header-title">DELUGE - FIND MISSING SAMPLES</h1>
+            <h1 class="header-title">FIND & FIX MISSING SAMPLES</h1>
             <span class="header-intro">
-            <h3>Seek sample orphans and bring them home</h3>
+            <!-- <h3>Seek sample orphans and bring them home</h3>-->
             <h4>Press tha button to run</h4>
             </span>
         </div>
-        <div class="button-container" id="seek-off">
-            <img id="seek-off-img" src="assets/button_offK.png">
+        <div id="button-container"  class="button-container">
+            <img id="seek-off-img" src="assets/b_off.png">
             <div class="button-text"> </div>
         </div>
-        <div style="display:none" id="seek-on" class="button-container">
-            <img id="seek-on-img" src="assets/button_on.png">
-            <div class="button-text"> </div>
-        </div>
+       
         <br/>
         <br/>
     </div>
