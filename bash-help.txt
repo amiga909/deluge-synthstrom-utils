@@ -8,3 +8,9 @@ find . -type f -name "._*" -exec rm -rf {} \;
 
 
 dot_clean -n . 
+
+
+
+electron-packager . --overwrite --platform=darwin --arch=x64 --prune=true --out=release-builds
+
+electron .
