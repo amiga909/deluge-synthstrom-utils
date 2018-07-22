@@ -16,6 +16,9 @@ window.$ = window.jQuery = require('jquery');
     font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: center;
 }
+body {
+
+}
 
 .container {
   //display:none;
@@ -61,7 +64,8 @@ h4 {
     z-index: 1;
 }
 
-.content {
+.content { 
+      overflow: auto; 
 //display:none;
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
@@ -125,7 +129,7 @@ pre {text-align: left; }
     <div class="background-image"></div>
     <div class="content">
         <div class="header">
-            <h1 id="header-title" class="header-title">FIND & FIX MISSING SAMPLES</h1>
+            <h1 id="header-title" class="header-title">FIND&FIX MISSING SAMPLES</h1>
             <span class="header-intro">
             <h4 id="header-intro-text">Press tha button to run</h4>
             </span>

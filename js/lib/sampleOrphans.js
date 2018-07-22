@@ -26,6 +26,7 @@ let missingCnt = 0
 let existingSamples = {}
 let usedSamples = {}
 let $console = null
+let existingUnique = {} 
 
 
 
@@ -87,28 +88,35 @@ function printResults(log) {
     //log(delugeXmls)
 }
 
-let existingUniqueFileNames = {} 
+
 
 function findSample(path) {
     let result = null
     let parts = path.split("/")
     let searchFileName = parts[parts.length - 1]
-    if (existingUniqueFileNames[searchFileName] && existingUniqueFileNames[searchFileName] != "_DUPE_") {
-        console.log("fileName memoized..", searchFileName, existingUniqueFileNames[searchFileName])
-        return existingUniqueFileNames[searchFileName]
+
+     console.log("LOOK: " + searchFileName)
+    if (existingUnique[searchFileName] && existingUnique[searchFileName] != "_DUPE_") {
+        console.log("FOUND: Was memoized..", searchFileName)
+        return existingUnique[searchFileName]
     }
-    //shell.echo(shell.pwd())
+    
     let matches = shell.find(SAMPLES_PATH).filter(function(file) {
+        let isDir = shell.test('-d', file)
+        if(isDir)return false;
         let fParts = file.split("/")
         let fileName = fParts[fParts.length - 1]
-        if (existingUniqueFileNames[fileName]) {
-            existingUniqueFileNames[fileName] = "_DUPE_"
+        if (existingUnique[fileName] == String(file)) {
+            existingUnique[fileName] = "_DUPE_"
         } else {
-            existingUniqueFileNames[fileName] = file;
+            existingUnique[fileName] = String(file);
         }
+
         return fileName == searchFileName;
     });
+    console.log(existingUnique)
     if (matches && matches.length == 1) {
+        console.log("FOUND: unique filename")
         result = matches[0]
     }
     if (matches && matches[0]) {
@@ -117,7 +125,15 @@ function findSample(path) {
             matches = shell.find(SAMPLES_PATH).filter(function(file) {
                 return file.match(parts[parts.length - 2] + '/' + parts[parts.length - 1]);
             });
+            if(matches && matches.length == 1) {
+                console.log("FOUND: not unique filename, but one has same parent folder as original")
+                result = matches[0]
+            }
         }
+    }
+
+    if(result == null) {
+        console.log("NOT FOUND")
     }
 
 
@@ -170,9 +186,10 @@ function checkFiles(entries) {
 
             if (!shell.test('-f', path)) {
                 missingCnt++
+                console.time("findSample")
                 let found = findSample(path)
+                console.timeEnd("findSample")
                 if (missing[xmlFile]) {
-                    console.log("look for " + path)
                     missing[xmlFile].push({
                         'invalid': path,
                         'found': found

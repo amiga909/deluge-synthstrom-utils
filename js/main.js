@@ -91,7 +91,7 @@ function animateBtn() {
 
 $(document).ready(function() {
     init()
-   // fancyIntro()
+   fancyIntro()
 
 });
 
