@@ -17,10 +17,16 @@ window.$ = window.jQuery = require('jquery');
     text-align: center;
 }
 
+.container {
+  //display:none;
+}
+
 .header-title {
     text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
 }
-
+.header-title-no-shadow {
+    text-shadow: 0;
+}
 h1 {
     letter-spacing: 5px;
     color: #e6dbc9;
@@ -48,8 +54,6 @@ h4 {
     background-size: cover;
 
     display: block;
-    filter: blur(3px);
-    -webkit-filter: blur(12px);
     height: 100%;
     left: 0;
     position: fixed;
@@ -58,7 +62,7 @@ h4 {
 }
 
 .content {
-
+//display:none;
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
@@ -84,46 +88,63 @@ h4 {
 .button-container img {
     cursor: pointer;
 }
-.button-container img:hover {
-    
-}
-.button-text {
-    cursor: pointer;
-    color: black;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-}
 
-.button-container:hover {
+
+#console-wrapper {
+  overflow: auto;
+    max-height: 400px;
+
     position: relative;
-    text-align: center;
     color: white;
-}
+    width: 80%;
+    background-color: black;
+    min-height: 100px;
+    margin: auto;
+    color: red;
+    margin-top: 10px;
+    margin-bottom: 10px;
+} 
+#console {
+      text-align: left;
+   padding:10px;
+   font-size: 14px;
+} 
 
- 
+pre {text-align: left; }
+.string { color: green; }
+.number { color: darkorange; }
+.boolean { color: blue; }
+.null { color: magenta; }
+.key { color: red; }
+
+
 </style>
 
 <body>
+   <div class="container">
     <div class="background-image"></div>
     <div class="content">
         <div class="header">
-            <h1 class="header-title">FIND & FIX MISSING SAMPLES</h1>
+            <h1 id="header-title" class="header-title">FIND & FIX MISSING SAMPLES</h1>
             <span class="header-intro">
-            <!-- <h3>Seek sample orphans and bring them home</h3>-->
-            <h4>Press tha button to run</h4>
+            <h4 id="header-intro-text">Press tha button to run</h4>
             </span>
         </div>
         <div id="button-container"  class="button-container">
             <img id="seek-off-img" src="assets/b_off.png">
             <div class="button-text"> </div>
         </div>
-       
+        <div id="console-wrapper"  class="">
+<div id="console"  class="">
+  >
+
+       </div>
+       </div>
         <br/>
         <br/>
     </div>
     <div class="footer">
+    </div>
     </div>
 </body>
 

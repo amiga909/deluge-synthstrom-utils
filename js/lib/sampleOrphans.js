@@ -18,13 +18,33 @@ FgCyan = "\x1b[36m"
 FgWhite = "\x1b[37m"
 */
 
-function dirCheck() {
-    // dev hack..
+
+let delugeXmls = {}
+let total = 0
+let missing = {}
+let missingCnt = 0
+let existingSamples = {}
+let usedSamples = {}
+let $console = null
+
+
+
+
+exports.run = function run(log) {
+    DELUGE_PATHS.forEach(function(path) {
+        usedSamples = parseFilenames(path)
+        //log("Testing samples in " + path + " files")
+        checkFiles(usedSamples)
+    })
+    printResults(log)
+
+}
+
+exports.dirCheck = function() {
     if (shell.test('-d', shell.pwd() + "/../SONGS")) {
         shell.cd('../');
-        console.log('Change directory to Deluge root');
+        //console.log('Change directory to Deluge root');
     }
-    // end dev hack
 
     // check if folders assumed in app are here
     let missingDirs = []
@@ -36,61 +56,71 @@ function dirCheck() {
 
     if (missingDirs.length != 0) {
         console.log(RED, "Beware: Some Deluge folders are missing: " + missingDirs.join(","))
-        shell.exit()
+        //shell.exit()
     }
+    shell.mkdir('-p', '__ARCHIVED')
 }
 
-let delugeXmls = {}
-let total = 0
-let missing = {}
-let missingCnt = 0
-
-
-
-
-
-function run() {
-    dirCheck()
-    DELUGE_PATHS.forEach(function(path) {
-        let samples = parseFilenames(path)
-        console.log("Processing " + path + " files")
-        checkFiles(samples)
-
-    })
-    printResults()
+function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
 }
 
-
-function printResults() {
-    console.log(RED, "Missing samples")
-    console.log(missing)
-    console.log("total " + total + ", missing " + missingCnt)
-    console.log(delugeXmls)
+function printResults(log) {
+   // log("Missing samples")
+    log("<pre>"+syntaxHighlight(JSON.stringify(missing, undefined, 4))+"</pre>")
+    log("total " + total + ", missing " + missingCnt)
+    //log(delugeXmls)
 }
 
-
+let existingUniqueFileNames = {} 
 
 function findSample(path) {
     let result = null
     let parts = path.split("/")
+    let searchFileName = parts[parts.length - 1]
+    if (existingUniqueFileNames[searchFileName] && existingUniqueFileNames[searchFileName] != "_DUPE_") {
+        console.log("fileName memoized..", searchFileName, existingUniqueFileNames[searchFileName])
+        return existingUniqueFileNames[searchFileName]
+    }
     //shell.echo(shell.pwd())
     let matches = shell.find(SAMPLES_PATH).filter(function(file) {
-        return file.match(parts[parts.length - 1]);
+        let fParts = file.split("/")
+        let fileName = fParts[fParts.length - 1]
+        if (existingUniqueFileNames[fileName]) {
+            existingUniqueFileNames[fileName] = "_DUPE_"
+        } else {
+            existingUniqueFileNames[fileName] = file;
+        }
+        return fileName == searchFileName;
     });
+    if (matches && matches.length == 1) {
+        result = matches[0]
+    }
     if (matches && matches[0]) {
         if (matches.length != 1) {
-            // try to match parent folder too
+            // try to disambiguate via parent folder too
             matches = shell.find(SAMPLES_PATH).filter(function(file) {
                 return file.match(parts[parts.length - 2] + '/' + parts[parts.length - 1]);
             });
         }
     }
 
-    if (matches && matches.length == 1) {
-        result = matches[0]
-    } else {
-        //console.log("Could not find match for "+path)
-    }
+
     //console.log("result: path "+trimSamplesPath(path)+" goes to " + result)
     return result
 }
@@ -129,36 +159,36 @@ function parseFilenames(dirName) {
 
 
 function checkFiles(entries) {
-    for (let song in entries) {
+    let pwd = String(shell.pwd())
 
-        let paths = entries[song]
+    for (let xmlFile in entries) {
+
+        let paths = entries[xmlFile]
         paths.forEach(function(path) {
-
             total++
-            path = __dirname + "/../" + path
+            path = pwd + "/" + path
 
             if (!shell.test('-f', path)) {
                 missingCnt++
-                if (missing[song]) {
+                let found = findSample(path)
+                if (missing[xmlFile]) {
                     console.log("look for " + path)
-                    let found = findSample(path)
-                    missing[song].push({
-                        'path': path,
+                    missing[xmlFile].push({
+                        'invalid': path,
                         'found': found
                     })
                 } else {
-                    missing[song] = [{
-                        'path': path,
-                        'found': null
+                    missing[xmlFile] = [{
+                        'invalid': path,
+                        'found': found
                     }]
                 }
 
-            } else {
-
-            }
+            
+            } 
 
         })
-        console.log("checkFiles done")
+        //console.log("checkFiles done")
 
     }
 }
@@ -177,6 +207,7 @@ function extractFileNames(obj, stack, fileName) {
                     if (path)[
                         stack[fileName].push(path)
                     ]
+                    //console.log(path)
                 }
             }
         }
@@ -198,6 +229,3 @@ function toXml(json) {
     json = JSON.parse(json);
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + json2xml(json, "\t");
 }
-
-
-module.exports = run
