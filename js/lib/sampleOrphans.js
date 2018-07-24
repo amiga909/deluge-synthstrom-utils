@@ -1,23 +1,16 @@
 const shell = require('shelljs')
+const fs = require('fs')
+const walk = require('fs-walk')
+const path = require('path')
+
 const x2jsLib = require('x2js')
 const json2xml = require('json2xml')
 const x2js = new x2jsLib()
 
-const DELUGE_PATHS = ["SONGS", "KITS", "SYNTHS"]
-const SAMPLES_PATH = "SAMPLES"
-const RED = '\x1b[31m%s\x1b[0m'
+const DELUGE_XML_PATHS = ["SONGS", "KITS", "SYNTHS"]
+const DELUGE_SAMPLES_PATH = "SAMPLES"
 
-/*
-FgBlack = "\x1b[30m"
-FgRed = "\x1b[31m"
-FgGreen = "\x1b[32m"
-FgYellow = "\x1b[33m"
-FgBlue = "\x1b[34m"
-FgMagenta = "\x1b[35m"
-FgCyan = "\x1b[36m"
-FgWhite = "\x1b[37m"
-*/
-
+let WORKING_DIR = process.cwd()
 
 let delugeXmls = {}
 let total = 0
@@ -26,45 +19,73 @@ let missingCnt = 0
 let existingSamples = {}
 let usedSamples = {}
 let $console = null
-let existingUnique = {} 
-
-
+let existingUnique = {}
 
 
 exports.run = function run(log) {
-    DELUGE_PATHS.forEach(function(path) {
-        usedSamples = parseFilenames(path)
+    if (!isRootDir()) {
+        console.log("exit, not root dir")
+        return false;
+    }
+    existingSamples = getAudioFileTree()
+    console.log("existingSamples", usedSamples)
+    DELUGE_XML_PATHS.forEach(function(path) {
+        usedSamples[path] = parseFilenames(path)
+
         //log("Testing samples in " + path + " files")
-        checkFiles(usedSamples)
+        //checkFiles(usedSamples)
     })
-    printResults(log)
+    console.log("usedSamples", usedSamples)
+    //printResults(log)
 
 }
 
-exports.dirCheck = function() {
-    if (shell.test('-d', shell.pwd() + "/../SONGS")) {
-        shell.cd('../');
-        //console.log('Change directory to Deluge root');
+function getAudioFileTree() {
+
+ 
+walk.walkSync(path.normalize(WORKING_DIR +"/"+ DELUGE_SAMPLES_PATH), function(basedir, filename, stat) {
+    let perm = stat.isDirectory() ? 0755 : 0644;
+    console.log(basedir)
+    //fs.chmodSync(path.join(basedir, filename), perm, next);
+});
+}
+
+function isRootDir() {
+
+    let missingDirs = []
+    // assume Deluge root is parent
+    let oneUp = WORKING_DIR + "/../" + DELUGE_SAMPLES_PATH
+    if (fs.existsSync(oneUp)) {
+        WORKING_DIR += "/../"
     }
 
-    // check if folders assumed in app are here
-    let missingDirs = []
-    DELUGE_PATHS.concat(SAMPLES_PATH).forEach(function(path) {
-        if (shell.test('-d', shell.pwd() + "/" + path) === false) {
+    DELUGE_XML_PATHS.concat(DELUGE_SAMPLES_PATH).forEach(function(path) {
+        if (!fs.existsSync(WORKING_DIR + path)) {
             missingDirs.push(path)
         }
     })
-
     if (missingDirs.length != 0) {
-        console.log(RED, "Beware: Some Deluge folders are missing: " + missingDirs.join(","))
+
+        console.log("Beware: Some Deluge folders are missing: " + missingDirs.join(","))
         //shell.exit()
+        return false
     }
+    return true
+}
+
+exports.dirCheck = function() {
+    return isRootDir()
+
+    // check if folders assumed in app are here
+
+
+
     shell.mkdir('-p', '__ARCHIVED')
 }
 
 function syntaxHighlight(json) {
     json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
         var cls = 'number';
         if (/^"/.test(match)) {
             if (/:$/.test(match)) {
@@ -82,11 +103,12 @@ function syntaxHighlight(json) {
 }
 
 function printResults(log) {
-   // log("Missing samples")
-    log("<pre>"+syntaxHighlight(JSON.stringify(missing, undefined, 4))+"</pre>")
-    log("total " + total + ", missing " + missingCnt)
+    // log("Missing samples")
+    console.log("<pre>" + syntaxHighlight(JSON.stringify(missing, undefined, 4)) + "</pre>")
+    console.log("total " + total + ", missing " + missingCnt)
     //log(delugeXmls)
 }
+
 
 
 
@@ -95,15 +117,15 @@ function findSample(path) {
     let parts = path.split("/")
     let searchFileName = parts[parts.length - 1]
 
-     console.log("LOOK: " + searchFileName)
+    console.log("LOOK: " + searchFileName)
     if (existingUnique[searchFileName] && existingUnique[searchFileName] != "_DUPE_") {
         console.log("FOUND: Was memoized..", searchFileName)
         return existingUnique[searchFileName]
     }
-    
-    let matches = shell.find(SAMPLES_PATH).filter(function(file) {
+
+    let matches = shell.find(DELUGE_SAMPLES_PATH).filter(function(file) {
         let isDir = shell.test('-d', file)
-        if(isDir)return false;
+        if (isDir) return false;
         let fParts = file.split("/")
         let fileName = fParts[fParts.length - 1]
         if (existingUnique[fileName] == String(file)) {
@@ -125,14 +147,14 @@ function findSample(path) {
             matches = shell.find(SAMPLES_PATH).filter(function(file) {
                 return file.match(parts[parts.length - 2] + '/' + parts[parts.length - 1]);
             });
-            if(matches && matches.length == 1) {
+            if (matches && matches.length == 1) {
                 console.log("FOUND: not unique filename, but one has same parent folder as original")
                 result = matches[0]
             }
         }
     }
 
-    if(result == null) {
+    if (result == null) {
         console.log("NOT FOUND")
     }
 
@@ -145,7 +167,7 @@ function trimSamplesPath(path) {
     result = path.replace(shell.pwd(), "")
     let parts = path.split("/")
     parts.reverse().forEach(function(part, index) {
-        if (part == SAMPLES_PATH) {
+        if (part == DELUGE_SAMPLES_PATH) {
             result = parts.slice(0, index).reverse()
         }
     })
@@ -154,11 +176,10 @@ function trimSamplesPath(path) {
 
 function parseFilenames(dirName) {
     let samples = {}
-    shell.find(dirName + "/").filter(function(file) {
-        if (file.match(/\.XML$/) != null) {
-            let fileName = String(file)
-            let data = String(shell.cat(file))
-            let obj = toJson(data)
+
+    readXMLDirectory(path.normalize(WORKING_DIR + "/" + dirName),
+        //onSuccess
+        function(fileName, obj) {
 
             if (delugeXmls[dirName]) {
                 delugeXmls[fileName].push(obj)
@@ -167,8 +188,23 @@ function parseFilenames(dirName) {
             }
 
             extractFileNames(obj, samples, fileName)
-        }
-    });
+        },
+        //onError
+        function(error) {
+            console.log("error opening file: " + error)
+        })
+
+    /*
+        shell.find(dirName + "/").filter(function(file) {
+            if (file.match(/\.XML$/) != null) {
+                let fileName = String(file)
+                let data = String(shell.cat(file))
+                let obj = toJson(data)
+
+               
+            }
+        });*/
+
     return samples
 
 }
@@ -201,8 +237,8 @@ function checkFiles(entries) {
                     }]
                 }
 
-            
-            } 
+
+            }
 
         })
         //console.log("checkFiles done")
@@ -229,6 +265,32 @@ function extractFileNames(obj, stack, fileName) {
             }
         }
     }
+}
+
+
+
+function readXMLDirectory(dirname, onFileContent, onError) {
+    fs.readdir(dirname, function(err, filenames) {
+        if (err) {
+            //console.log(err)
+            onError(err);
+            return;
+        }
+        filenames.forEach(function(filename) {
+            //console.log(dirname + "+" + filename)
+            if (filename.match(/\.XML$/) == null) {
+                return;
+            }
+            fs.readFile(path.normalize(dirname + "/" + filename), 'utf-8',
+                function(err, content) {
+                    if (err) {
+                        onError(err);
+                        return;
+                    }
+                    onFileContent(filename, toJson(content));
+                });
+        });
+    });
 }
 
 

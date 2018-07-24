@@ -48,12 +48,9 @@ function onStart() {
     animateBtn()
 
     log("Starting")
-    window.setTimeout(function() {
-        SamplePathParser.dirCheck()
+		SamplePathParser.dirCheck()
         //log("Dir is Checked.")
         SamplePathParser.run(log)
-    }, 100)
-
     if (isToggled) {
         $thaButtonImg.attr("src", BTN_COLORS.red)
         window.clearInterval(blinkerTimeout)
@@ -91,7 +88,7 @@ function animateBtn() {
 
 $(document).ready(function() {
     init()
-   fancyIntro()
+  onStart()// fancyIntro()
 
 });
 
