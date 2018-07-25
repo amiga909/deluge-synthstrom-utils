@@ -27,27 +27,64 @@ exports.run = function run(log) {
         console.log("exit, not root dir")
         return false;
     }
-    existingSamples = getAudioFileTree()
-    console.log("existingSamples", usedSamples)
+    getAudioFileTree()
+    console.log("existingSamples", existingSamples)
     DELUGE_XML_PATHS.forEach(function(path) {
         usedSamples[path] = parseFilenames(path)
-
         //log("Testing samples in " + path + " files")
         //checkFiles(usedSamples)
+
     })
     console.log("usedSamples", usedSamples)
+    checkMissing()
+
     //printResults(log)
 
 }
 
-function getAudioFileTree() {
+function checkMissing() {
+    for (folder in usedSamples) {
 
- 
-walk.walkSync(path.normalize(WORKING_DIR +"/"+ DELUGE_SAMPLES_PATH), function(basedir, filename, stat) {
-    let perm = stat.isDirectory() ? 0755 : 0644;
-    console.log(basedir)
-    //fs.chmodSync(path.join(basedir, filename), perm, next);
-});
+        let xmlFiles = Object.keys(usedSamples.SONGS);//Object.keys(usedSamples[folder])
+
+        console.log("folder", folder)
+        console.log("xmlfiles", xmlFiles)
+        
+
+        xmlFiles.forEach(function(file) {
+            console.log("file", file)
+                file.forEach(function(audioFile){
+                    if (existingSamples[audioFile] == 1) {
+                        console.log(audioFile + " exists")
+                    } else {
+                        console.log(audioFile + " not exists")
+                    }
+                })
+        })
+
+}
+
+}
+
+
+
+function getAudioFileTree() {
+    let audioRegex = {
+        wav: /\.WAV$/i,
+        aif: /\.AIF$/i,
+        aiff: /\.AIFF$/i,
+    }
+    walk.walkSync(path.normalize(WORKING_DIR + "/" + DELUGE_SAMPLES_PATH), function(basedir, filename, stat) {
+        //let perm = stat.isDirectory() ? 0755 : 0644;
+
+        if (filename.match(audioRegex.wav) != null ||
+            filename.match(audioRegex.aif) != null ||
+            filename.match(audioRegex.aiff) != null) {
+            let p = path.join(basedir, filename).replace(/.*\/SAMPLES\//, '')
+            existingSamples[p] = 1
+        }
+    });
+    //console.log(existingSamples)
 }
 
 function isRootDir() {
@@ -177,7 +214,7 @@ function trimSamplesPath(path) {
 function parseFilenames(dirName) {
     let samples = {}
 
-    readXMLDirectory(path.normalize(WORKING_DIR + "/" + dirName),
+    readXMLDirectory(path.normalize(WORKING_DIR + "/" + dirName + "/"),
         //onSuccess
         function(fileName, obj) {
 
@@ -193,17 +230,6 @@ function parseFilenames(dirName) {
         function(error) {
             console.log("error opening file: " + error)
         })
-
-    /*
-        shell.find(dirName + "/").filter(function(file) {
-            if (file.match(/\.XML$/) != null) {
-                let fileName = String(file)
-                let data = String(shell.cat(file))
-                let obj = toJson(data)
-
-               
-            }
-        });*/
 
     return samples
 
