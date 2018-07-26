@@ -11,84 +11,88 @@ const BTN_COLORS = {
 const css = {
     "backgroundImage": ".background-image",
     "thaButton": "#button-container",
-    "thaButtonImg": "#button-container img",
+    "thaButtonImg": "#seek-off-img",
+    "thaButtonSeekOff": "#seek-off-img",
+    "thaButtonSeekOffHover": "#seek-off-hover-img",
+    "thaButtonSeekOn": "#seek-on-img",
+    "thaButtonSuccess": "#success-img",
+    "thaButtonError": "#error-img",
     "headerText": "#header-intro-text",
     "console": "#console",
     "headerTitle": "#header-title"
 }
 
-let $thaButton,
-    $headerText,
-    $headerTitle,
-    $thaButtonImg = null;
+let $dom = {}
 
 let isToggled = false
-let blinkerTimeout = 0
 
 
 function init() {
-    $thaButton = $(css.thaButton)
-    $thaButtonImg = $(css.thaButtonImg)
-    $headerText = $(css.headerText)
-    $headerTitle = $(css.headerTitle)
-    $console = $(css.console)
+    for (element in css) {
+        $dom[element] = $(css[element])
+    }
 
     listen()
 }
 
 function log(msg) {
-    $console.append(msg + "<br/>")
+    $dom.console.append(msg + "<br/>")
 }
 
 function onStart() {
-    $thaButtonImg.attr("src", BTN_COLORS.pink)
-    $headerText.html("Processing...")
+    //$thaButtonImg.attr("src", BTN_COLORS.pink)
 
-    $headerTitle.removeClass("header-title")
-    animateBtn()
+    //$headerTitle.removeClass("header-title")
+
+showButton("thaButtonSeekOn")
 
     log("Starting")
-		SamplePathParser.dirCheck()
-        //log("Dir is Checked.")
-        SamplePathParser.run(log)
+    SamplePathParser.dirCheck()
+    //log("Dir is Checked.")
+   
+    SamplePathParser.run(log) 
+     showButton("thaButtonSuccess")
+
+     $dom.headerText.html("Done")
+
+
     if (isToggled) {
-        $thaButtonImg.attr("src", BTN_COLORS.red)
-        window.clearInterval(blinkerTimeout)
+    return false;
         isToggled = false
-        $headerText.html("Abort")
-        $thaButton.off("click")
+        $dom.headerText.html("Please reload app")
+        $dom.thaButton.off("click")
+      
+    showButton("thaButtonError")
     } else { isToggled = true }
 }
 
 function listen() {
-    $thaButton.on("mouseover", () => {
-        if (!isToggled) $thaButtonImg.attr("src", BTN_COLORS.blank_lumen)
+    $dom.thaButton.on("mouseover", () => {
+        if (!isToggled) $dom.thaButtonImg.attr("src", BTN_COLORS.blank_lumen)
     })
-    $thaButton.on("mouseout", () => {
-        if (!isToggled) $thaButtonImg.attr("src", BTN_COLORS.blank)
+    $dom.thaButton.on("mouseout", () => {
+        if (!isToggled) $dom.thaButtonImg.attr("src", BTN_COLORS.blank)
     })
-    $thaButton.on("click", () => {
+    $dom.thaButton.on("click", () => {
         onStart()
 
     })
 }
 
-function animateBtn() {
-    window.clearInterval(blinkerTimeout)
-    blinkerTimeout = window.setInterval(function() {
-        let $curr = $thaButtonImg.attr("src");
-        if ($curr == BTN_COLORS.blank) {
-            $thaButtonImg.attr("src", BTN_COLORS.pink)
-        } else {
-            $thaButtonImg.attr("src", BTN_COLORS.blank)
-        }
-    }, 500)
+function showButton(d){
+     $dom.thaButtonSeekOff.hide()
+      $dom.thaButtonSeekOn.hide()
+      $dom.thaButtonSuccess.hide()
+      $dom.thaButtonError.hide()
+$dom[d].show()
 }
+
 
 
 $(document).ready(function() {
     init()
-  onStart()// fancyIntro()
+    //onStart()   // DEBUG
+    fancyIntro()
 
 });
 
@@ -118,8 +122,8 @@ function fancyIntro() {
     let $content = $(".content")
 
     $content.hide()
-    $headerText.hide()
-    $thaButton.hide()
+    $dom.headerText.hide()
+    $dom.thaButton.hide()
 
     window.setTimeout(function() {
         tweenBlur(css.backgroundImage, 0, 20);
@@ -127,15 +131,15 @@ function fancyIntro() {
 
 
     window.setTimeout(function() {
-        tweenBlur($headerText, 20, 0);
+        tweenBlur($dom.headerText, 20, 0);
         $content.show()
-        $headerText.show()
+        $dom.headerText.show()
     }, 1000);
 
     window.setTimeout(function() {
-        tweenBlur($thaButton, 20, 0);
+        tweenBlur($dom.thaButton, 20, 0);
 
-        $thaButton.show()
+        $dom.thaButton.show()
     }, 1500);
 
     /*

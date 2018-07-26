@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Snythstrom Deluge - Maintenance Tool - Missing Sample Fixer</title>
     <meta charset="utf-8">
@@ -16,20 +17,21 @@ window.$ = window.jQuery = require('jquery');
     font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: center;
 }
-body {
 
-}
+body {}
 
 .container {
-  //display:none;
+    //display:none;
 }
 
 .header-title {
     text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
 }
+
 .header-title-no-shadow {
     text-shadow: 0;
 }
+
 h1 {
     letter-spacing: 5px;
     color: #e6dbc9;
@@ -64,9 +66,9 @@ h4 {
     z-index: 1;
 }
 
-.content { 
-      overflow: auto; 
-//display:none;
+.content {
+    overflow: auto;
+    //display:none;
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
@@ -82,12 +84,12 @@ h4 {
     height: 100%;
 }
 
-.button-container { 
+.button-container {
     position: relative;
     text-align: center;
-    color: white; 
+    color: white;
     width: 80px;
-    margin: auto; 
+    margin: auto;
 }
 
 .button-container img {
@@ -96,7 +98,7 @@ h4 {
 
 
 #console-wrapper {
-  overflow: auto;
+    overflow: auto;
     max-height: 1800px;
 
     position: relative;
@@ -108,48 +110,66 @@ h4 {
     color: red;
     margin-top: 10px;
     margin-bottom: 10px;
-} 
+}
+
 #console {
-      text-align: left;
-   padding:10px;
-   font-size: 14px;
-} 
+    text-align: left;
+    padding: 10px;
+    font-size: 14px;
+}
 
-pre {text-align: left; }
-.string { color: green; }
-.number { color: darkorange; }
-.boolean { color: blue; }
-.null { color: magenta; }
-.key { color: red; }
+pre {
+    text-align: left;
+}
 
+.string {
+    color: green;
+}
 
+.number {
+    color: darkorange;
+}
+
+.boolean {
+    color: blue;
+}
+
+.null {
+    color: magenta;
+}
+
+.key {
+    color: red;
+}
 </style>
 
 <body>
-   <div class="container">
-    <div class="background-image"></div>
-    <div class="content">
-        <div class="header">
-            <h1 id="header-title" class="header-title">FIND&FIX MISSING SAMPLES</h1>
-            <span class="header-intro">
+    <div class="container">
+        <div class="background-image"></div>
+        <div class="content">
+            <div class="header">
+                <h1 id="header-title" class="header-title">FIND&FIX MISSING SAMPLES</h1>
+                <span class="header-intro">
             <h4 id="header-intro-text">Press tha button to run</h4>
             </span>
+            </div>
+            <div id="button-container" class="button-container">
+                <img id="seek-off-img" src="assets/b_off.png">
+                <img style="display:none;" id="seek-on-img" src="assets/b_blinking.gif">
+                <img style="display:none;" id="success-img" src="assets/b_green.png">
+                <img style="display:none;" id="error-img" src="assets/b_red.png">
+                <div class="button-text"> </div>
+            </div>
+            <div id="console-wrapper" class="">
+                <div id="console" class="">
+                    >
+                </div>
+            </div>
+            <br/>
+            <br/>
         </div>
-        <div id="button-container"  class="button-container">
-            <img id="seek-off-img" src="assets/b_off.png">
-            <div class="button-text"> </div>
+        <div class="footer">
         </div>
-        <div id="console-wrapper"  class="">
-<div id="console"  class="">
-  >
-
-       </div>
-       </div>
-        <br/>
-        <br/>
-    </div>
-    <div class="footer">
-    </div>
     </div>
 </body>
 

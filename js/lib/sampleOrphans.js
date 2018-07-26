@@ -21,24 +21,24 @@ let usedSamples = {}
 let $console = null
 
 
-
 exports.run = function run(log) {
     if (!isRootDir()) {
         console.log("exit, not root dir")
         return false;
     }
     getAudioFileTree()
-    console.log("existingSamples", existingSamples)
+    // console.log("existingSamples", existingSamples)
     DELUGE_XML_PATHS.forEach(function(p) {
         usedSamples[p] = parseFilenames(p)
 
     })
-    console.log("fokkin deluge analysis ", usedSamples, usedSamples.SONGS)
+    console.log(" deluge analysis ", usedSamples, usedSamples.SONGS)
 
 
     checkMissing()
 
     printResults(log)
+    return missing;
 }
 
 exports.dirCheck = function(log) {
@@ -54,7 +54,7 @@ function checkMissing() {
             let testees = usedSamples[folder][file].sampleNames
             testees.forEach(function(audioFile) {
                 if (existingSamples[audioFile] == 1) {
-                    console.log(audioFile + " exists")
+                    //console.log(audioFile + " exists")
                 } else {
                     missingCnt++
                     if (missing[file]) {
@@ -62,13 +62,10 @@ function checkMissing() {
                     } else {
                         missing[file] = [audioFile]
                     }
-                    //console.log(audioFile + " not exists")
                 }
             })
         })
-
     }
-
 }
 
 
@@ -199,7 +196,7 @@ function readXMLDirectory(dirname) {
         let json = toJson(buf)
 
         extractFileNames(json, sampleNames, filename)
-total+= sampleNames.length
+        total += sampleNames.length
         files[filename] = { 'json': json, 'xml': buf, 'sampleNames': sampleNames };
     });
 
