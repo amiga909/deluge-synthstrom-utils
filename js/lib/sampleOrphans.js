@@ -45,24 +45,24 @@ exports.run = function run(log) {
 function checkMissing() {
     for (folder in usedSamples) {
 
-        let xmlFiles = Object.keys(usedSamples.SONGS);//Object.keys(usedSamples[folder])
+        let xmlFiles = Object.keys(usedSamples.SONGS); //Object.keys(usedSamples[folder])
 
         console.log("folder", folder)
         console.log("xmlfiles", xmlFiles)
-        
+
 
         xmlFiles.forEach(function(file) {
             console.log("file", file)
-                file.forEach(function(audioFile){
-                    if (existingSamples[audioFile] == 1) {
-                        console.log(audioFile + " exists")
-                    } else {
-                        console.log(audioFile + " not exists")
-                    }
-                })
+            file.forEach(function(audioFile) {
+                if (existingSamples[audioFile] == 1) {
+                    console.log(audioFile + " exists")
+                } else {
+                    console.log(audioFile + " not exists")
+                }
+            })
         })
 
-}
+    }
 
 }
 
@@ -148,7 +148,7 @@ function printResults(log) {
 
 
 
-
+/*
 function findSample(path) {
     let result = null
     let parts = path.split("/")
@@ -200,6 +200,10 @@ function findSample(path) {
     return result
 }
 
+*/
+
+
+/*
 function trimSamplesPath(path) {
     result = path.replace(shell.pwd(), "")
     let parts = path.split("/")
@@ -210,32 +214,23 @@ function trimSamplesPath(path) {
     })
     return SAMPLES_PATH + "/" + result.join("/")
 }
+*/
 
 function parseFilenames(dirName) {
     let samples = {}
 
-    readXMLDirectory(path.normalize(WORKING_DIR + "/" + dirName + "/"),
-        //onSuccess
-        function(fileName, obj) {
+    let p = path.normalize(WORKING_DIR + "/" + dirName + "/")
+    delugeXmls[dirName] = readXMLDirectory(p)
 
-            if (delugeXmls[dirName]) {
-                delugeXmls[fileName].push(obj)
-            } else {
-                delugeXmls[fileName] = [obj]
-            }
+    console.log("delug", delugeXmls)
 
-            extractFileNames(obj, samples, fileName)
-        },
-        //onError
-        function(error) {
-            console.log("error opening file: " + error)
-        })
+    //extractFileNames(obj, samples, fileName)
 
     return samples
 
 }
 
-
+/*
 function checkFiles(entries) {
     let pwd = String(shell.pwd())
 
@@ -271,6 +266,7 @@ function checkFiles(entries) {
 
     }
 }
+*/
 
 function extractFileNames(obj, stack, fileName) {
     for (var property in obj) {
@@ -296,27 +292,21 @@ function extractFileNames(obj, stack, fileName) {
 
 
 function readXMLDirectory(dirname, onFileContent, onError) {
-    fs.readdir(dirname, function(err, filenames) {
-        if (err) {
-            //console.log(err)
-            onError(err);
+    let files = []
+    console.log("xxx", dirname)
+    let filenames = fs.readdirSync(dirname)
+
+    //console.log("x", filenames)
+    filenames.forEach(function(filename) {
+        //console.log(dirname + "+" + filename)
+        if (filename.match(/\.XML$/i) == null) {
             return;
         }
-        filenames.forEach(function(filename) {
-            //console.log(dirname + "+" + filename)
-            if (filename.match(/\.XML$/) == null) {
-                return;
-            }
-            fs.readFile(path.normalize(dirname + "/" + filename), 'utf-8',
-                function(err, content) {
-                    if (err) {
-                        onError(err);
-                        return;
-                    }
-                    onFileContent(filename, toJson(content));
-                });
-        });
+        let buf = fs.readFileSync(path.normalize(dirname + "/" + filename), 'utf8')
+        //console.log(buf)
+        files.push({ 'json': toJson(buf), 'xml': buf });
     });
+    return files;
 }
 
 
