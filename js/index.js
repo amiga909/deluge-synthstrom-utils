@@ -15,9 +15,3 @@ app.once('ready', (document) => {
 app.on('window-all-closed', function() {
     app.quit();
 });
-
-
-/*
-
-
-*/
