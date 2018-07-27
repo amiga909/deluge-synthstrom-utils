@@ -4,7 +4,7 @@
 ## samplefixer.sh
 
 ### Platforms
-- Mac OSX, (Linux)
+- Mac OSX, (Linux, Windows Shell)
 
 ### Want a tidy sample library? 
 - Get rid of "UNSUPPORTED" messages in the Synthstrom Deluge file browser
@@ -40,7 +40,7 @@ Delete non audio files and WAV samples Synthstrom Deluge might not be able to lo
 ## archive_unused_recordings.rb
 
 ### Platforms
-- Mac OSX, (Linux)
+- Mac OSX, (Linux, Windows Shell)
 
 Script to remove unused samples on the Deluge SD Card
 currently only removes recordings
