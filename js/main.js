@@ -5,26 +5,21 @@ const BTN_COLORS = {
     'green': 'assets/b_green.png',
     'blank_lumen': 'assets/b_off_lumen.png',
     'pink': 'assets/b_pink.png',
-    'red': 'assets/b_red.png'
+    'red': 'assets/b_red.png',
+    'blinking': 'assets/b_blinking.gif',
+
 
 }
 const css = {
     "backgroundImage": ".background-image",
     "thaButton": "#button-container",
-    "thaButtonImg": "#seek-off-img",
-    "thaButtonSeekOff": "#seek-off-img",
-    "thaButtonSeekOffHover": "#seek-off-hover-img",
-    "thaButtonSeekOn": "#seek-on-img",
-    "thaButtonSuccess": "#success-img",
-    "thaButtonError": "#error-img",
+    "thaButtonImg": "#thaButton",
     "headerText": "#header-intro-text",
     "console": "#console",
     "headerTitle": "#header-title"
 }
 
 let $dom = {}
-
-let isToggled = false
 
 
 function init() {
@@ -40,51 +35,43 @@ function log(msg) {
 }
 
 function onStart() {
-    //$thaButtonImg.attr("src", BTN_COLORS.pink)
-
     //$headerTitle.removeClass("header-title")
 
-showButton("thaButtonSeekOn")
+    $dom.thaButtonImg.attr("src", BTN_COLORS.blinking)
 
-    log("Starting")
-    SamplePathParser.dirCheck()
+    SamplePathParser.dirCheck(log)
     //log("Dir is Checked.")
-   
-    SamplePathParser.run(log) 
-     showButton("thaButtonSuccess")
 
-     $dom.headerText.html("Done")
+    SamplePathParser.run(log, function() {
+        $dom.thaButtonImg.attr("src", BTN_COLORS.green)
+        $dom.headerText.html("Done")
+    })
 
 
-    if (isToggled) {
-    return false;
-        isToggled = false
-        $dom.headerText.html("Please reload app")
-        $dom.thaButton.off("click")
-      
-    showButton("thaButtonError")
-    } else { isToggled = true }
+
 }
 
 function listen() {
     $dom.thaButton.on("mouseover", () => {
-        if (!isToggled) $dom.thaButtonImg.attr("src", BTN_COLORS.blank_lumen)
+        $dom.thaButtonImg.attr("src", BTN_COLORS.blank_lumen)
     })
     $dom.thaButton.on("mouseout", () => {
-        if (!isToggled) $dom.thaButtonImg.attr("src", BTN_COLORS.blank)
+        $dom.thaButtonImg.attr("src", BTN_COLORS.blank)
     })
     $dom.thaButton.on("click", () => {
         onStart()
-
+        $dom.thaButton.off("click")
+        $dom.thaButton.off("mouseover")
+        $dom.thaButton.off("mouseout")
     })
 }
 
-function showButton(d){
-     $dom.thaButtonSeekOff.hide()
-      $dom.thaButtonSeekOn.hide()
-      $dom.thaButtonSuccess.hide()
-      $dom.thaButtonError.hide()
-$dom[d].show()
+function showButton(d) {
+    $dom.thaButtonSeekOff.hide()
+    $dom.thaButtonSeekOn.hide()
+    $dom.thaButtonSuccess.hide()
+    $dom.thaButtonError.hide()
+    $dom[d].show()
 }
 
 
