@@ -6,3 +6,5 @@ SAMPLES
 SYNTHS
 .DS_Store
 _xml-bk
+release-builds
+Electron application.app
