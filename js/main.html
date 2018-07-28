@@ -25,7 +25,7 @@ body {}
 }
 
 .header-title {
-    text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
+    letter-spacing: 10px text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
 }
 
 .header-title-no-shadow {
@@ -67,8 +67,7 @@ h4 {
 }
 
 .content {
-    overflow: auto;
-    //display:none;
+    //overflow: auto; //display:none;
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
@@ -80,7 +79,7 @@ h4 {
     margin-right: 20px;
     right: 0;
     z-index: 2;
-    padding: 5px 10px;
+    padding: 5px 5px;
     height: 100%;
 }
 
@@ -100,10 +99,10 @@ h4 {
 #console-wrapper {
     overflow: auto;
     max-height: 1800px;
-
+height: 66%;
     position: relative;
     color: white;
-    width: 80%;
+    width: 95%;
     background-color: black;
     min-height: 100px;
     margin: auto;
@@ -117,6 +116,27 @@ h4 {
     padding: 10px;
     font-size: 16px;
 }
+
+.msg_error {}
+
+.msg_info {}
+
+.msg_success {
+    color: green;
+
+    line-height: 22px;
+}
+
+.msg_debug {
+    font-size: 10px;
+}
+
+.msg_error {
+    color: red;
+
+    line-height: 22px;
+}
+
 
 pre {
     text-align: left;
@@ -148,7 +168,10 @@ pre {
         <div class="background-image"></div>
         <div class="content">
             <div class="header">
-                <h1 id="header-title" class="header-title">FIND&FIX MISSING SAMPLES</h1>
+                <h1 id="header-title" class="header-title">
+                    <a target="_blank" href="https://github.com/amiga909/deluge-synthstrom-utils"> 
+FIND&FIX MISSING SAMPLES
+                    </a></h1>
                 <span class="header-intro">
             <h4 id="header-intro-text">Press tha button to run</h4>
             </span>
@@ -158,7 +181,6 @@ pre {
             </div>
             <div id="console-wrapper" class="">
                 <div id="console" class="">
-                    >
                 </div>
             </div>
             <br/>

@@ -23,29 +23,38 @@ let $dom = {}
 
 
 function init() {
-    for (element in css) {
+    for (let element in css) {
         $dom[element] = $(css[element])
     }
 
     listen()
 }
 
-function log(msg) {
-    $dom.console.append(msg + "<br/>")
+function log(msg, style) {
+    style = typeof style === 'undefined' ? '' : style
+
+    if (style == 'error') {
+        msg = '<span class="msg_error">' + msg + '</span>'
+    } else if (style == 'success') {
+        msg = '<span class="msg_success">' + msg + '</span>'
+    } else if (style == 'info') {
+        msg = '<span class="msg_info">' + msg + '</span>'
+    } else if (style == 'debug') {
+        msg = '<span class="msg_debug">' + msg + '</span>'
+    }
+    msg = msg + "<br/>"
+    $dom.console.append(msg)
 }
 
 function onStart() {
     //$dom.headerTitle.removeClass("header-title")
-
     $dom.thaButtonImg.attr("src", BTN_COLORS.blinking)
 
-    SamplePathParser.dirCheck(log)
-    //log("Dir is Checked.")
-
-    SamplePathParser.run(log, function() {
+    let onSuccess = function() {
         $dom.thaButtonImg.attr("src", BTN_COLORS.green)
         $dom.headerText.html("Done")
-    })
+    };
+    SamplePathParser.run(log, onSuccess)
 
 }
 
@@ -73,7 +82,7 @@ function listen() {
 
 $(document).ready(function() {
     init()
-    //onStart()   // DEBUG
+   // onStart() // DEBUG
     fancyIntro()
 
 });
