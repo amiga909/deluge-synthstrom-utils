@@ -1,53 +1,57 @@
-const shell = require('shelljs')
 const fs = require('fs')
 const walk = require('walk')
 const path = require('path')
-
-
 const x2jsLib = require('x2js')
 const json2xml = require('json2xml')
+const objIterator = require('object-recursive-iterator');
 const x2js = new x2jsLib()
+const { remote } = require('electron')
+const helpers = require('./helpers')
 
 const DELUGE_XML_PATHS = ["SONGS", "KITS", "SYNTHS"]
 const DELUGE_SAMPLES_PATH = "SAMPLES"
+const DELUGE_FILENAME_PROP = 'fileName'
 
-const { remote } = window.require('electron')
 
-let WORKING_DIR = process.cwd()
+let WORKING_DIR = remote.app.getAppPath() //process.cwd()
 
 let total = 0
 let totalFull = 0
 let missing = {}
-let missingCnt = 0
 let existingSamples = {}
+let uniqueSampleNames = {}
+let missingReport = {
+    notFound: [],
+    ambiguous: {}
+}
 
-let usedSamples = {}
+let delugeXmls = {}
 let $console = null
+let log = null;
 
 
-exports.run = function run(log, onSuccess) {
-
-
+exports.run = function run(l, onSuccess) {
+    log = l
     if (!isRootDir(log)) {
         log("Exit. Deluge root directory not found. WORKING_DIR: " + WORKING_DIR)
         return false;
     }
-    getAudioFileTree(log, function() {
+    getAudioFileTree(function() {
         findMissing()
         onSuccess()
     })
 
-
 }
 
-exports.dirCheck = function(log) {
+exports.dirCheck = function(l) {
+    log = l
     // add chooseable workdir later..
     log('Working directory: ' + remote.app.getAppPath())
-    return isRootDir(log)
-    shell.mkdir('-p', '__ARCHIVED')
+    log("process cwd: " + process.cwd())
+    return isRootDir()
 }
 
-function isRootDir(log) {
+function isRootDir() {
 
     let missingDirs = []
     // assume Deluge root is parent
@@ -65,7 +69,7 @@ function isRootDir(log) {
     if (missingDirs.length != 0) {
 
         log("Beware: Some Deluge folders are missing: " + missingDirs.join(","))
-        //shell.exit()
+
         return false
     }
     return true
@@ -73,30 +77,34 @@ function isRootDir(log) {
 
 function findMissing(onSuccess) {
     DELUGE_XML_PATHS.forEach(function(p) {
-        usedSamples[p] = parseFilenames(p)
+        delugeXmls[p] = parseFilenames(p)
 
     })
     //console.log(" deluge analysis ", usedSamples, usedSamples.SONGS)
-
-
-    checkMissing()
-
-    printResults(log)
-
+    //console.log(existingSamples)
+    getMissing()
+    //console.log("missing ");
+    //console.log(missing)
+    let map = locateMissing()
+    fixMissing(map)
+    printResults()
 
     return missing;
 }
 
-function checkMissing() {
-    for (folder in usedSamples) {
-        let xmlFiles = Object.keys(usedSamples[folder]);
+function getMissing() {
+    for (folder in delugeXmls) {
+        let xmlFiles = Object.keys(delugeXmls[folder]);
         xmlFiles.forEach(function(file) {
-            let testees = usedSamples[folder][file].sampleNames
+            let testees = delugeXmls[folder][file].sampleNames
             testees.forEach(function(audioFile) {
-                if (existingSamples[audioFile] == 1) {
-                    //console.log(audioFile + " exists")
+                let norm = normalizeFileExtension(audioFile)
+                if (existingSamples[norm] == 1) {
+                    // console.log(norm + " exists")
+                    // console.log(existingSamples[norm])
                 } else {
-                    missingCnt++
+                    // console.log(existingSamples[norm], norm)
+
                     if (missing[file]) {
                         missing[file].push(audioFile)
                     } else {
@@ -108,9 +116,16 @@ function checkMissing() {
     }
 }
 
+function normalizeFileExtension(str) {
+    return str ? str.replace(/\.wav$/i, '.wav').replace(/\.aif$/i, '.aif').replace(/\.aiff$/i, '.aiff') : str;
+}
 
+function getFileNameFromPath(str) {
+    let pp = str.split("/")
+    return pp[pp.length - 1]
+}
 
-function getAudioFileTree(log, onEnd, onError) {
+function getAudioFileTree(onEnd, onError) {
     log("Collecting stored samples...")
     let audioRegex = {
         wav: /\.WAV$/i,
@@ -119,9 +134,7 @@ function getAudioFileTree(log, onEnd, onError) {
     }
     let options = {
         followLinks: false
-        // directories with these keys will be skipped
-        // , filters: ["Temp", "_Temp"]
-    };
+    }
     let walker = walk.walk(path.normalize(WORKING_DIR + "/" + DELUGE_SAMPLES_PATH), options);
 
     walker.on("file", function(basedir, fileStats, next) {
@@ -130,8 +143,17 @@ function getAudioFileTree(log, onEnd, onError) {
         if (f.match(audioRegex.wav) != null ||
             f.match(audioRegex.aif) != null ||
             f.match(audioRegex.aiff) != null) {
-            let p = normalizePath(path.join(basedir, f).replace(/.*\/SAMPLES\//, ''))
+            let p = normalizePath(path.join(basedir, f).replace(/.*\/SAMPLES\//, 'SAMPLES/'))
+
+            p = normalizeFileExtension(p)
             existingSamples[p] = 1
+            let sampleName = getFileNameFromPath(p)
+            if (uniqueSampleNames[sampleName]) {
+                uniqueSampleNames[sampleName].push(p)
+            } else {
+                uniqueSampleNames[sampleName] = [p]
+            }
+            // if (p.match(/808 Rim/) != null) {console.log("pp ", p)}
             totalFull++
         }
         next()
@@ -149,108 +171,245 @@ function getAudioFileTree(log, onEnd, onError) {
     });
 }
 
-function syntaxHighlight(json) {
-    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
-        var cls = 'number';
-        if (/^"/.test(match)) {
-            if (/:$/.test(match)) {
-                cls = 'key';
-            } else {
-                cls = 'string';
+
+function printResults() {
+    let missingCnt = Object.keys(missing).length
+    log("Total samples in " + DELUGE_XML_PATHS.join(', ') + ": " + total)
+    if (missingCnt == 0) {
+        log("<br><br>Null sweat chummer, all your sample paths are chill.")
+    } else {
+        log("<br><br>Drek chummer, some samples are fragged.")
+        log("<pre>" + helpers.syntaxHighlight(missing) + "</pre>")
+
+        let ambigCount = Object.keys(missingReport.ambiguous).length
+        let notFoundCount = missingReport.notFound.length
+        if (notFoundCount > 0 || ambigCount > 0) {
+            log("Of " + missingCnt + "samples " + (notFoundCount + ambigCount) + " are not fixed.")
+                if (notFoundCount > 0) {
+                    log("Not found samples:" + missingReport.notFound.join(", "))
+                }
+                if (notFoundCount > 0) {
+                    log("Ambiguous samples:" + JSON.stringify(missingReport.ambiguous))
+                }
             }
-        } else if (/true|false/.test(match)) {
-            cls = 'boolean';
-        } else if (/null/.test(match)) {
-            cls = 'null';
+            else {
+                log("Null sweat chummer I got your hoop, all your sample paths are chill now.")
+            }
+
+
         }
-        return '<span class="' + cls + '">' + match + '</span>';
-    });
-}
 
-function printResults(log) {
-    log("<br><br>Drek chummer, some samples are fragged.")
-    log("<pre>" + syntaxHighlight(JSON.stringify(missing, undefined, 4)) + "</pre>")
-    log("total samples used " + total + ", missing " + missingCnt)
-    log("<br><br>Null sweat chummer, let's fix the sample paths in your XML files.")
-}
+    }
 
+    function fixMissing(map) {
+        // console.log("fix missingaa")
+        // console.log(map)
+        let xmlsToWrite = {}
 
-function parseFilenames(dirName) {
-    let parsed = {}
-    let sampleNames = []
+        for (folder in delugeXmls) {
+            let xmlFiles = Object.keys(delugeXmls[folder]);
+            xmlFiles.forEach(function(file) {
+                if (missing[file]) {
+                    // console.log("process " + file)
+                    //console.log(delugeXmls[folder][file])
 
-    let p = path.normalize(WORKING_DIR + "/" + dirName + "/")
-    parsed = readXMLDirectory(p)
+                    //let xml = toXml(delugeXmls[folder][file].json)
 
-    //console.log("delugaaa ", parsed, "dirname " + dirName)
-    return parsed;
-}
-
-
-function extractFileNames(obj, stack, fileName) {
-    for (var property in obj) {
-        if (obj.hasOwnProperty(property)) {
-            if (typeof obj[property] == "object") {
-                extractFileNames(obj[property], stack, fileName);
-            } else {
-                if (property == 'fileName') {
-                    if (!stack) {
-                        stack = []
+                    let fixedJson = fixJson(delugeXmls[folder][file].json, map)
+                    if (fixedJson != null) {
+                        //  console.log(delugeXmls[folder][file])
+                        //console.log("write that shit", fixedJson)
+                        let xml = toXml(fixedJson)
+                        //console.log(xml)
+                        writeXmlFile(file, xml)
                     }
-                    let p = String(obj[property])
-                    if (p) {
-                        stack.push(normalizePath(p))
+
+                }
+
+            })
+        }
+    }
+
+    function writeXmlFile(xmlFile, fixedXml) {
+        // create Backup!!
+
+        for (folder in delugeXmls) {
+            let xmlFiles = Object.keys(delugeXmls[folder]);
+            xmlFiles.forEach(function(file) {
+                if (file == xmlFile) {
+                    console.log(delugeXmls[folder][file].fullPath)
+                    let fullPath = delugeXmls[folder][file].fullPath
+                    if (fs.existsSync(fullPath)) {
+                        fs.writeFileSync(fullPath, fixedXml, 'utf8')
+                        console.log("written file ", fullPath)
+                    } else {
+                        console.log("Error could not write to file ", xmlFile)
+                    }
+                }
+
+            })
+        }
+    }
+
+
+
+
+    function fixJson(obj, map) {
+
+        hasReplacements = false
+        objIterator.forAll(obj, function(path, key, obj) {
+            if (key == DELUGE_FILENAME_PROP) {
+                //console.log('----------');
+                //console.log('path: ', path);
+                //console.log('key: ', key);
+                //console.log('value before processing: ', obj[key]);
+                if (map[obj[key]]) {
+                    obj[key] = map[obj[key]]
+                    console.log("replaced sample path! " + obj[key])
+                    hasReplacements = true
+                }
+
+            }
+        });
+        return hasReplacements ? obj : null;
+
+
+        // write xml return obj
+
+    }
+
+
+
+
+    function locateMissing() {
+        log("Locate missing..")
+        let resultMapping = {} // missing -> found
+        for (let xmlFile in missing) {
+            let samplePaths = missing[xmlFile]
+            samplePaths.forEach(function(p) {
+                let name = getFileNameFromPath(p)
+                if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
+                    resultMapping[p] = uniqueSampleNames[name]
+                    //console.log("f unique replacement")
+                } else {
+                    if (uniqueSampleNames[name]) {
+                        missingReport.ambiguous[p] = uniqueSampleNames[name]
+                    } else {
+                        missingReport.notFound.push(p)
+                    }
+                }
+
+            })
+        }
+
+        return resultMapping;
+
+        //let parts = path.split("/")  parts[parts.length - 1]);
+
+        /*
+         let matches = shell.find(SAMPLES_PATH).filter(function(file) {
+             return file.match(parts[parts.length - 1]);
+         });
+         if (matches && matches[0]) {
+             if (matches.length != 1) {
+                 // try to match parent folder too
+                 matches = shell.find(SAMPLES_PATH).filter(function(file) {
+                     return file.match(parts[parts.length - 2] + '/' + parts[parts.length - 1]);
+                 });
+             }
+         }
+
+         if (matches && matches.length == 1) {
+             result = matches[0]
+         } else {
+             //console.log("Could not find match for "+path)
+         }
+         //console.log("result: path "+trimSamplesPath(path)+" goes to " + result)
+         return result
+         */
+    }
+
+
+    function parseFilenames(dirName) {
+        let parsed = {}
+        let sampleNames = []
+
+        let p = path.normalize(WORKING_DIR + "/" + dirName + "/")
+        parsed = readXMLDirectory(p)
+
+        //console.log("delugaaa ", parsed, "dirname " + dirName)
+        return parsed;
+    }
+
+
+    function extractFileNames(obj, stack, fileName) {
+        for (var property in obj) {
+            if (obj.hasOwnProperty(property)) {
+                if (typeof obj[property] == "object") {
+                    extractFileNames(obj[property], stack, fileName);
+                } else {
+                    if (property == DELUGE_FILENAME_PROP) {
+                        if (!stack) {
+                            stack = []
+                        }
+                        let p = String(obj[property])
+                        if (p) {
+                            stack.push(normalizePath(p))
+                        }
                     }
                 }
             }
         }
     }
-}
 
-function normalizePath(p) {
-    p = path.normalize(p)
-    p = p.replace(/^SAMPLES\//, '')
-    p = p.replace(/^\/SAMPLES\//, '')
-    return p
-}
+    function normalizePath(p) {
+        p = path.normalize(p)
+        p = p.replace(/^SAMPLES\//, 'SAMPLES/')
+        p = p.replace(/^\/SAMPLES\//, 'SAMPLES/')
+        return p
+    }
 
-function readXMLDirectory(dirname) {
-    let files = {}
-    let sampleNames = []
+    function readXMLDirectory(dirname) {
+        let files = {}
+        let sampleNames = []
 
-    let filenames = fs.readdirSync(dirname)
+        let filenames = fs.readdirSync(dirname)
 
-    //console.log("x", filenames)
-    filenames.forEach(function(filename) {
-        //console.log(dirname + "+" + filename)
-        if (filename.match(/\.XML$/i) == null) {
-            return;
-        }
-        let buf = fs.readFileSync(path.normalize(dirname + "/" + filename), 'utf8')
+        //console.log("x", filenames)
+        filenames.forEach(function(filename) {
+            //console.log(dirname + "+" + filename)
+            if (filename.match(/\.XML$/i) == null) {
+                return;
+            }
+            let fP = path.normalize(dirname + "/" + filename)
+            let buf = fs.readFileSync(fP, 'utf8')
 
-        let json = toJson(buf)
+            let json = toJson(buf)
+            //console.log(buf)
+            extractFileNames(json, sampleNames, filename)
+            total += sampleNames.length
+            files[filename] = { 'json': json, 'xml': buf, 'fullPath': fP, 'sampleNames': sampleNames.filter(onlyUnique) };
+        });
 
-        extractFileNames(json, sampleNames, filename)
-        total += sampleNames.length
-        files[filename] = { 'json': json, 'xml': buf, 'sampleNames': sampleNames };
-    });
+        return files;
+    }
 
-    return files;
-}
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
 
+    function toJson(xml) {
+        // cannot parse xml version statement :p
+        xml = xml.replace(/<\?xml .*\?>/, '');
+        // one root tag allowed, use wrapper
+        let json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap;
 
-function toJson(xml) {
-    // cannot parse xml version statement :p
-    xml = xml.replace(/<\?xml .*\?>/, '');
-    // one root tag allowed, use wrapper
-    var json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap;
-
-    return json;
-}
+        return json;
+    }
 
 
-function toXml(json) {
-    json = JSON.parse(json);
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + json2xml(json, "\t");
-}
+    function toXml(j) {
+        //console.log(j)
+
+        return '<?xml version="1.0" encoding="UTF-8"?>\n' + x2js.js2xml(j, "\t");
+    }

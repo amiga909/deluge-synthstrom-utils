@@ -6,7 +6,7 @@ require('electron-reload')(__dirname)
 let mainWindow = null
 
 app.once('ready', (document) => {
-    mainWindow = new BrowserWindow({ width: 1000, height: 550 })
+    mainWindow = new BrowserWindow({ width: 1200, height: 800 })
     mainWindow.loadFile('main.html')
     mainWindow.webContents.openDevTools()
 

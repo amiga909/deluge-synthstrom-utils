@@ -1,3 +1,5 @@
+const { getCurrentWindow, globalShortcut } = require('electron').remote;
+
 const SamplePathParser = require('./lib/sampleOrphans');
 
 const BTN_COLORS = {
@@ -7,8 +9,6 @@ const BTN_COLORS = {
     'pink': 'assets/b_pink.png',
     'red': 'assets/b_red.png',
     'blinking': 'assets/b_blinking.gif',
-
-
 }
 const css = {
     "backgroundImage": ".background-image",
@@ -35,7 +35,7 @@ function log(msg) {
 }
 
 function onStart() {
-    //$headerTitle.removeClass("header-title")
+    //$dom.headerTitle.removeClass("header-title")
 
     $dom.thaButtonImg.attr("src", BTN_COLORS.blinking)
 
@@ -46,8 +46,6 @@ function onStart() {
         $dom.thaButtonImg.attr("src", BTN_COLORS.green)
         $dom.headerText.html("Done")
     })
-
-
 
 }
 
@@ -63,17 +61,14 @@ function listen() {
         $dom.thaButton.off("click")
         $dom.thaButton.off("mouseover")
         $dom.thaButton.off("mouseout")
+        $dom.thaButton.on("click", function() {
+            let r = confirm("Reload App?")
+            if (r === true) {
+                getCurrentWindow().reload()
+            }
+        })
     })
 }
-
-function showButton(d) {
-    $dom.thaButtonSeekOff.hide()
-    $dom.thaButtonSeekOn.hide()
-    $dom.thaButtonSuccess.hide()
-    $dom.thaButtonError.hide()
-    $dom[d].show()
-}
-
 
 
 $(document).ready(function() {
@@ -82,6 +77,10 @@ $(document).ready(function() {
     fancyIntro()
 
 });
+
+
+
+
 
 function fancyIntro() {
     let setBlur = function(ele, radius) {
