@@ -13,7 +13,7 @@ window.$ = window.jQuery = require('jquery');
 <style>
 * {
     box-sizing: border-box;
-    color: white; //#2e3830;
+    color: #ebebeb; // white; //#2e3830;
     font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     text-align: center;
 }
@@ -40,7 +40,7 @@ h1 {
 }
 
 h3 {
-    color: white;
+    //color: white;
     font-size: 32px;
     letter-spacing: 5px;
     padding: 0px;
@@ -48,7 +48,6 @@ h3 {
 }
 
 h4 {
-    color: white;
     font-size: 24px;
     letter-spacing: 5px;
     padding: 0px text-shadow: 0 0 1px #ff2d95
@@ -57,7 +56,6 @@ h4 {
 .background-image {
     background-image: url('assets/deluge_heart_sym.png');
     background-size: cover;
-
     display: block;
     height: 100%;
     left: 0;
@@ -67,11 +65,9 @@ h4 {
 }
 
 .content {
-    //overflow: auto; //display:none;
     background-color: rgba(17, 17, 17, 0.8);
     border-radius: 3px;
     box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
-
     top: 10px;
     left: 0;
     position: fixed;
@@ -83,10 +79,27 @@ h4 {
     height: 100%;
 }
 
+.footer {
+    position: fixed;
+    z-index: 99;
+    top: 0;
+    margin-top: 30px;
+    left: 100%;
+    margin-left: -105px;
+    font-size: 14px
+}
+
+.footer a {
+    cursor: pointer;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
 .button-container {
     position: relative;
     text-align: center;
-    color: white;
     width: 80px;
     margin: auto;
 }
@@ -99,14 +112,12 @@ h4 {
 #console-wrapper {
     overflow: auto;
     max-height: 1800px;
-height: 66%;
+    height: 66%;
     position: relative;
-    color: white;
     width: 95%;
-    background-color: black;
+    background-color: #181712; //black; // b=181712 w=F0F0F0
     min-height: 100px;
     margin: auto;
-    color: red;
     margin-top: 10px;
     margin-bottom: 10px;
 }
@@ -117,23 +128,22 @@ height: 66%;
     font-size: 16px;
 }
 
-.msg_error {}
 
-.msg_info {}
+.msg_info {
+    //color: #0000FF
+}
 
 .msg_success {
-    color: green;
-
+    color: #00FF00;
     line-height: 22px;
 }
 
 .msg_debug {
-    font-size: 10px;
+    font-size: 12px;
 }
 
 .msg_error {
-    color: red;
-
+    color: #FF0000;
     line-height: 22px;
 }
 
@@ -159,19 +169,18 @@ pre {
 }
 
 .key {
-    color: red;
+    color: grey;
 }
 </style>
 
 <body>
     <div class="container">
-        <div class="background-image"></div>
+        <div style="display:none;" class="background-image"></div>
         <div class="content">
             <div class="header">
                 <h1 id="header-title" class="header-title">
-                    <a target="_blank" href="https://github.com/amiga909/deluge-synthstrom-utils"> 
-FIND&FIX MISSING SAMPLES
-                    </a></h1>
+                     FIND&FIX MISSING SAMPLES
+                   </h1>
                 <span class="header-intro">
             <h4 id="header-intro-text">Press tha button to run</h4>
             </span>
@@ -186,8 +195,10 @@ FIND&FIX MISSING SAMPLES
             <br/>
             <br/>
         </div>
-        <div class="footer">
-        </div>
+    </div>
+    <div class="footer">
+        <a id="footer-github">Github</a> |
+        <a id="footer-help">Help</a>
     </div>
 </body>
 

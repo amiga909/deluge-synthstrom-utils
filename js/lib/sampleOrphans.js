@@ -1,18 +1,15 @@
 const fs = require('fs')
 const walk = require('walk')
 const path = require('path')
-const x2jsLib = require('x2js')
-const json2xml = require('json2xml')
-const objIterator = require('object-recursive-iterator');
-const x2js = new x2jsLib()
+const mkdirp = require('mkdirp-sync')
+const objIterator = require('object-recursive-iterator')
+const unique = require('array-unique')
 const { remote } = require('electron')
-const mkdirp = require('mkdirp-sync');
 
 const helpers = require('./helpers')
 const DELUGE_XML_PATHS = ["SONGS", "KITS", "SYNTHS"]
 const DELUGE_SAMPLES_PATH = "SAMPLES"
 const DELUGE_FILENAME_PROP = 'fileName'
-
 
 let WORKING_DIR = remote.app.getAppPath() //process.cwd()
 let ARCHIVE_PATH = '__MISSING_SAMPLES_FIXER_ARCHIVE'
@@ -23,26 +20,24 @@ let totalXmlFiles = 0
 let existingSamples = {}
 let uniqueSampleNames = {}
 let missing = {}
-let missingReport = { totalMissing: 0, notFound: [], ambiguous: {} }
+let resultMapping = {} // maps 1 missing -> 1 found
+let missingReport = { notFound: [], ambiguous: {} }
 let delugeXmls = {}
 let $console = null
-let log = null;
-
+let log = null
 
 exports.run = function run(l, onSuccess) {
     log = l
-
-    log('Working directory: ' + remote.app.getAppPath(), 'debug')
-    log("process cwd: " + process.cwd(), 'debug')
+    //log('Working directory: ' + remote.app.getAppPath(), 'debug')
     if (!isRootDir(log)) {
-        log("Exit. WORKING_DIR: " + WORKING_DIR, 'error')
-        return false;
+        log("Exit.", 'error')
+        return false
     }
     getAudioFileTree(function() {
+        //  console.log(existingSamples)
         findMissing()
         onSuccess()
     })
-
 }
 
 // may set working dir
@@ -51,12 +46,19 @@ function isRootDir() {
     // assume Deluge root is parent
     let oneUp = WORKING_DIR + "/../" + DELUGE_SAMPLES_PATH
     if (fs.existsSync(oneUp)) {
-        WORKING_DIR += "/../"
+        WORKING_DIR = path.normalize(WORKING_DIR + "/../")
+        log("Changed Working Dir to " + WORKING_DIR, 'debug')
     }
 
-    DELUGE_XML_PATHS.concat(DELUGE_SAMPLES_PATH).forEach(function(path) {
-        if (!fs.existsSync(WORKING_DIR + path)) {
-            missingDirs.push(path)
+    // electron standalone app
+    let threeUp = WORKING_DIR + "/../../../../" + DELUGE_SAMPLES_PATH
+    if (fs.existsSync(threeUp)) {
+        WORKING_DIR = path.normalize(WORKING_DIR + "/../../../../")
+        log("Changed Working Dir to " + WORKING_DIR, 'debug')
+    }
+    DELUGE_XML_PATHS.concat(DELUGE_SAMPLES_PATH).forEach(function(p) {
+        if (!fs.existsSync(path.normalize(WORKING_DIR + "/" + p))) {
+            missingDirs.push(p)
         }
     })
     if (missingDirs.length != 0) {
@@ -81,23 +83,23 @@ function findMissing(onSuccess) {
 
     if (totalXmlFiles == 0) {
         log("Exit. No XML Files found.", 'error')
-        return false;
+        return false
     }
     getMissing()
-    let map = locateMissing()
-    fixMissing(map)
+    locateMissing()
+    fixMissing()
     printResults()
 
-    return missing;
+    return missing
 }
 
 function getMissing() {
     for (let folder in delugeXmls) {
-        let xmlFiles = Object.keys(delugeXmls[folder]);
+        let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach(function(file) {
             let testees = delugeXmls[folder][file].sampleNames
             testees.forEach(function(audioFile) {
-                let norm = normalizeFileExtension(audioFile)
+                let norm = audioFile
                 if (existingSamples[norm] == 1) {
                     // console.log(norm + " exists")
                     // console.log(existingSamples[norm])
@@ -116,7 +118,7 @@ function getMissing() {
 }
 
 function normalizeFileExtension(str) {
-    return str ? str.replace(/\.wav$/i, '.wav').replace(/\.aif$/i, '.aif').replace(/\.aiff$/i, '.aiff') : str;
+    return str ? str.replace(/\.wav$/i, '.wav').replace(/\.aif$/i, '.aif').replace(/\.aiff$/i, '.aiff') : str
 }
 
 function getFileNameFromPath(str) {
@@ -125,7 +127,7 @@ function getFileNameFromPath(str) {
 }
 
 function getAudioFileTree(onEnd, onError) {
-    log("Collecting stored samples...")
+    log("Collecting all samples, can take a while...")
     let audioRegex = {
         wav: /\.WAV$/i,
         aif: /\.AIF$/i,
@@ -134,10 +136,9 @@ function getAudioFileTree(onEnd, onError) {
     let options = {
         followLinks: false
     }
-    let walker = walk.walk(path.normalize(WORKING_DIR + "/" + DELUGE_SAMPLES_PATH), options);
+    let walker = walk.walk(path.normalize(WORKING_DIR + "/" + DELUGE_SAMPLES_PATH), options)
 
     walker.on("file", function(basedir, fileStats, next) {
-        //console.log(fileStats.name)
         let f = fileStats.name
         if (f.match(audioRegex.wav) != null ||
             f.match(audioRegex.aif) != null ||
@@ -147,6 +148,7 @@ function getAudioFileTree(onEnd, onError) {
             p = normalizeFileExtension(p)
             existingSamples[p] = 1
             let sampleName = getFileNameFromPath(p)
+
             if (uniqueSampleNames[sampleName]) {
                 uniqueSampleNames[sampleName].push(p)
             } else {
@@ -156,59 +158,35 @@ function getAudioFileTree(onEnd, onError) {
             totalFull++
         }
         next()
-    });
+    })
 
     walker.on("errors", function(root, nodeStatsArray, next) {
         log("Error reading file!")
         log(nodeStatsArray)
         next()
-    });
+    })
 
     walker.on("end", function() {
-        log("Done. Found " + totalFull + " audio files.");
-        onEnd()
+        if (totalFull == 0) {
+            log("Looks bad, no audio files found.", 'error')
+        } else {
+            log("Done. Found " + totalFull + " audio files.")
+            onEnd()
+        }
+
     });
 }
 
-
-function printResults() {
-    let missingCnt = missingReport.totalMissing
-    if (missingCnt == 0) {
-        log("<br><br>Null sweat chummer, all your sample paths are chill.", 'success')
-    } else {
-        log("<br><br>Drek chummer, some samples are fragged. We got missing samples.", 'error')
-        log(helpers.syntaxHighlight(missing))
-
-        let ambigCount = Object.keys(missingReport.ambiguous).length
-        let notFoundCount = missingReport.notFound.length
-        if (notFoundCount > 0 || ambigCount > 0) {
-            if (notFoundCount > 0) {
-                log("Not found samples:" + helpers.syntaxHighlight(missingReport.notFound))
-            }
-            if (notFoundCount > 0) {
-                log("Ambiguous samples:" + helpers.syntaxHighlight(missingReport.ambiguous))
-            }
-            log("Of " + missingCnt + " missing samples, " + (notFoundCount + ambigCount) + " are not fixed.")
-        } else {
-            log("Null sweat chummer I got your hoop, all your sample paths are chill now. No more missing samples.", 'green')
-        }
-
-        log("Total amount of sample assignments in " + DELUGE_XML_PATHS.join(', ') + " XML Files: " + total)
-
-    }
-
-}
-
-function fixMissing(map) {
+function fixMissing() {
     let xmlsToWrite = {}
 
     for (let folder in delugeXmls) {
-        let xmlFiles = Object.keys(delugeXmls[folder]);
+        let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach(function(xmlFileName) {
             if (missing[xmlFileName]) {
-                let fixedJson = fixJson(delugeXmls[folder][xmlFileName].json, map)
+                let fixedJson = fixJson(delugeXmls[folder][xmlFileName].json)
                 if (fixedJson != null) {
-                    let xml = toXml(fixedJson)
+                    let xml = helpers.toXml(fixedJson)
                     writeXmlFile(xmlFileName, xml)
                 }
             }
@@ -218,13 +196,14 @@ function fixMissing(map) {
 
 function writeXmlFile(xmlFile, fixedXml) {
     for (let folder in delugeXmls) {
-        let xmlFiles = Object.keys(delugeXmls[folder]);
+        let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach(function(file) {
             if (file == xmlFile) {
                 let fullPath = delugeXmls[folder][file].fullPath
                 if (fs.existsSync(fullPath)) {
                     createBackup(file, fullPath)
                     fs.writeFileSync(fullPath, fixedXml, 'utf8')
+                    log("Overwrite " + getFileNameFromPath(fullPath), 'debug')
                 } else {
                     //console.log("Error could not write to file ", xmlFile)
                 }
@@ -237,10 +216,10 @@ function writeXmlFile(xmlFile, fixedXml) {
 function createBackup(f, fP) {
     let d = new Date(Date.now()).toLocaleString()
     // one dir per minute
-    let runDir = d.substring(0, d.length - 6).replace(/[\W_-]/g, '_');
+    let runDir = d.substring(0, d.length - 6).replace(/[\W_-]/g, '_')
 
     let p = path.normalize(ARCHIVE_FULL_PATH + "/" + runDir)
-    mkdirp(p);
+    mkdirp(p)
     if (!fs.existsSync(p)) {
         log("Could not create backup directory " + p, 'error')
     }
@@ -249,48 +228,66 @@ function createBackup(f, fP) {
 }
 
 
-function fixJson(obj, map) {
-
+function fixJson(obj) {
     hasReplacements = false
     objIterator.forAll(obj, function(path, key, obj) {
         if (key == DELUGE_FILENAME_PROP) {
-            if (map[obj[key]]) {
-                obj[key] = map[obj[key]]
+            if (resultMapping[obj[key]]) {
                 hasReplacements = true
             }
         }
     })
-    return hasReplacements ? obj : null;
+    return hasReplacements ? obj : null
 }
 
-
-
-
 function locateMissing() {
-    //log("<br/>Locate missing..")
-    let resultMapping = {} // missing -> found
     for (let xmlFile in missing) {
         let samplePaths = missing[xmlFile]
         samplePaths.forEach(function(p) {
-            let name = getFileNameFromPath(p)
-            missingReport.totalMissing++
-                if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
-                    resultMapping[p] = uniqueSampleNames[name]
-                    //console.log("f unique replacement")
+            let name = normalizeFileExtension(getFileNameFromPath(p))
+            if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
+                resultMapping[p] = uniqueSampleNames[name]
+                //log("Move " + p + " to " + uniqueSampleNames[name], 'debug')
+                //console.log("f unique replacement")
+            } else {
+                if (uniqueSampleNames[name]) {
+                    missingReport.ambiguous[p] = uniqueSampleNames[name]
                 } else {
-                    if (uniqueSampleNames[name]) {
-                        missingReport.ambiguous[p] = uniqueSampleNames[name]
-                    } else {
-                        missingReport.notFound.push(p)
-                    }
+                    missingReport.notFound.push(p)
                 }
-
+            }
         })
     }
-
-    return resultMapping;
+    missingReport.notFound = unique(missingReport.notFound)
+    disambiguateSamples()
 }
 
+function disambiguateSamples() {
+    //console.log(missingReport.ambiguous)
+    for (let p in missingReport.ambiguous) {
+        // if there is sample that has the same parent folder and the others do not, take this
+        //console.log(p)
+        let parentFolder = getParentFolder(p)
+        let pleaseJustOne = missingReport.ambiguous[p].filter(function(c) {
+            return getParentFolder(c) == parentFolder
+        })
+        //console.log(pleaseJustOne)
+        if (pleaseJustOne && pleaseJustOne.length == 1) {
+            //console.log("aiks deduped", p)
+            delete missingReport.ambiguous[p]
+            uniqueSampleNames[p] = pleaseJustOne[0]
+            missingReport.notFound[p] = [pleaseJustOne[0]]
+            //log("Move " + p + " to " + map[p], 'debug')
+        }
+    }
+}
+
+
+function getParentFolder(fP) {
+    let parts = fP.split('/')
+    let parent = parts[parts.length - 2]
+    return parent
+}
 
 function parseFilenames(dirName) {
     let parsed = {}
@@ -299,7 +296,7 @@ function parseFilenames(dirName) {
     let p = path.normalize(WORKING_DIR + "/" + dirName + "/")
     parsed = readXMLDirectory(p)
 
-    return parsed;
+    return parsed
 }
 
 
@@ -307,14 +304,15 @@ function extractFileNames(obj, stack, fileName) {
     for (let property in obj) {
         if (obj.hasOwnProperty(property)) {
             if (typeof obj[property] == "object") {
-                extractFileNames(obj[property], stack, fileName);
+                extractFileNames(obj[property], stack, fileName)
             } else {
                 if (property == DELUGE_FILENAME_PROP) {
                     if (!stack) {
                         stack = []
                     }
                     let p = String(obj[property])
-                    if (p) {
+                    // Deluge bug, found some in older Songs, these files don't exist on the disk but Deluge manages to trace them somehow..
+                    if (p && p.match(/_~1\.WAV$/i) == null) {
                         stack.push(normalizePath(p))
                     }
                 }
@@ -339,32 +337,65 @@ function readXMLDirectory(dirname) {
         if (filename.match(/\.XML$/i) == null) {
             return
         }
+
         let fP = path.normalize(dirname + "/" + filename)
         let buf = fs.readFileSync(fP, 'utf8')
-        let json = toJson(buf)
+        let json = helpers.toJson(buf)
         extractFileNames(json, sampleNames, filename)
         total += sampleNames.length
         totalXmlFiles++
-        files[filename] = { 'json': json, 'xml': buf, 'fullPath': fP, 'sampleNames': sampleNames.filter(onlyUnique) };
+        files[filename] = { 'json': json, 'xml': buf, 'fullPath': fP, 'sampleNames': sampleNames.filter(onlyUnique) }
     })
 
     return files
 }
 
+function printResults() {
+    let ambigCount = Object.keys(missingReport.ambiguous).length || 0
+    let notFoundCount = missingReport.notFound.length || 0
+    let mappingCount = Object.keys(resultMapping).length || 0
+    let missingCnt = ambigCount + notFoundCount
+
+    log("Total amount of sample assignments in " + DELUGE_XML_PATHS.join(', ') + " XML Files: " + total, 'info')
+    if (missingCnt == 0) {
+        log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
+    } else {
+        if (mappingCount > 0) {
+            log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
+        }
+        if (notFoundCount > 0) {
+            let displ = missingReport.notFound.sort()
+            log(displ.length + " samples are missing" + helpers.syntaxHighlight(displ), 'error')
+        }
+        if (ambigCount > 0) {
+            log("Ambiguous samples, please resolve manually: " + helpers.syntaxHighlight(missingReport.ambiguous), 'error')
+        }
+        log("These XML Files still contain invalid sample paths " + helpers.syntaxHighlight(getRelatedXmlFiles().sort()), 'error')
+        log("Fixed " + mappingCount + " invalid sample paths, " + (notFoundCount + ambigCount) + " are not fixed.", 'error')
+    }
+}
+
+function getRelatedXmlFiles() {
+    let filenames = []
+    let allAmbiguous = []
+    for (let p in missingReport.ambiguous) {
+        allAmbiguous.push(p)
+    }
+    for (let folder in delugeXmls) {
+        let xmlFiles = Object.keys(delugeXmls[folder])
+        xmlFiles.forEach(function(file) {
+            let testees = delugeXmls[folder][file].sampleNames
+            let intersectionNotFound = missingReport.notFound.filter(value => -1 !== testees.indexOf(value))
+            let intersectionAmbiguous = allAmbiguous.filter(value => -1 !== testees.indexOf(value))
+            if (intersectionNotFound.length > 0 || intersectionAmbiguous > 0) {
+                filenames.push(file)
+            }
+        })
+    }
+
+    return filenames
+}
+
 function onlyUnique(value, index, self) {
-    return self.indexOf(value) === index;
-}
-
-function toJson(xml) {
-    // cannot parse xml version statement :p
-    xml = xml.replace(/<\?xml .*\?>/, '');
-    // one root tag allowed, use wrapper
-    let json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap;
-
-    return json;
-}
-
-
-function toXml(j) {
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + x2js.js2xml(j, "\t");
+    return self.indexOf(value) === index
 }

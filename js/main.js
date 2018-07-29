@@ -1,6 +1,6 @@
-const { getCurrentWindow, globalShortcut } = require('electron').remote;
-
-const SamplePathParser = require('./lib/sampleOrphans');
+const { getCurrentWindow, globalShortcut } = require('electron').remote
+const electronShell = require('electron').shell
+const SamplePathParser = require('./lib/sampleOrphans')
 
 const BTN_COLORS = {
     'blank': 'assets/b_off.png',
@@ -16,7 +16,9 @@ const css = {
     "thaButtonImg": "#thaButton",
     "headerText": "#header-intro-text",
     "console": "#console",
-    "headerTitle": "#header-title"
+    "headerTitle": "#header-title",
+    "footerGithub": '#footer-github',
+    "footerHelp": '#footer-help'
 }
 
 let $dom = {}
@@ -53,7 +55,7 @@ function onStart() {
     let onSuccess = function() {
         $dom.thaButtonImg.attr("src", BTN_COLORS.green)
         $dom.headerText.html("Done")
-    };
+    }
     SamplePathParser.run(log, onSuccess)
 
 }
@@ -65,7 +67,8 @@ function listen() {
     $dom.thaButton.on("mouseout", () => {
         $dom.thaButtonImg.attr("src", BTN_COLORS.blank)
     })
-    $dom.thaButton.on("click", () => {
+    $dom.thaButton.on("click", (e) => {
+        e.preventDefault()
         onStart()
         $dom.thaButton.off("click")
         $dom.thaButton.off("mouseover")
@@ -77,6 +80,15 @@ function listen() {
             }
         })
     })
+
+    $dom.footerGithub.on("click", (e) => {
+        e.preventDefault()
+        electronShell.openExternal("https://github.com/amiga909/deluge-synthstrom-utils")
+    })
+    $dom.footerHelp.on("click", (e) => {
+        e.preventDefault()
+        alert("Press Command+R to reload App. Command+Q to quit.")
+    })
 }
 
 
@@ -84,10 +96,7 @@ $(document).ready(function() {
     init()
    // onStart() // DEBUG
     fancyIntro()
-
-});
-
-
+})
 
 
 
@@ -97,7 +106,7 @@ function fancyIntro() {
             "-webkit-filter": "blur(" + radius + "px)",
             "filter": "blur(" + radius + "px)"
         });
-    };
+    }
 
     let tweenBlur = function(ele, startRadius, endRadius) {
         $({ blurRadius: startRadius }).animate({ blurRadius: endRadius }, {
@@ -105,15 +114,16 @@ function fancyIntro() {
             easing: 'swing', // or "linear"
             // use jQuery UI or Easing plugin for more options
             step: function() {
-                setBlur(ele, this.blurRadius);
+                setBlur(ele, this.blurRadius)
+                $dom.backgroundImage.show()
             },
             complete: function() {
                 // Final callback to set the target blur radius
                 // jQuery might not reach the end value
-                setBlur(ele, endRadius);
+                setBlur(ele, endRadius)
             }
-        });
-    };
+        })
+    }
     let $content = $(".content")
 
     $content.hide()
@@ -121,21 +131,21 @@ function fancyIntro() {
     $dom.thaButton.hide()
 
     window.setTimeout(function() {
-        tweenBlur(css.backgroundImage, 0, 20);
-    }, 100);
+        tweenBlur(css.backgroundImage, 0, 20)
+    }, 100)
 
 
     window.setTimeout(function() {
-        tweenBlur($dom.headerText, 20, 0);
+        tweenBlur($dom.headerText, 20, 0)
         $content.show()
         $dom.headerText.show()
-    }, 1000);
+    }, 1000)
 
     window.setTimeout(function() {
-        tweenBlur($dom.thaButton, 20, 0);
+        tweenBlur($dom.thaButton, 20, 0)
 
         $dom.thaButton.show()
-    }, 1500);
+    }, 1500)
 
     /*
         window.setInterval(function() {
