@@ -89,8 +89,6 @@ function findMissing(onSuccess) {
     locateMissing()
     fixMissing()
     printResults()
-
-    return missing
 }
 
 function getMissing() {
@@ -101,7 +99,7 @@ function getMissing() {
             testees.forEach(function(audioFile) {
                 let norm = audioFile
                 if (existingSamples[norm] == 1) {
-                    // console.log(norm + " exists")
+                    //console.log(norm + " exists")
                     // console.log(existingSamples[norm])
                 } else {
                     // console.log(existingSamples[norm], norm)
@@ -179,7 +177,6 @@ function getAudioFileTree(onEnd, onError) {
 
 function fixMissing() {
     let xmlsToWrite = {}
-
     for (let folder in delugeXmls) {
         let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach(function(xmlFileName) {
@@ -229,10 +226,13 @@ function createBackup(f, fP) {
 
 
 function fixJson(obj) {
+    console.log(resultMapping)
     hasReplacements = false
     objIterator.forAll(obj, function(path, key, obj) {
         if (key == DELUGE_FILENAME_PROP) {
             if (resultMapping[obj[key]]) {
+                //console.log("dsfsdf")
+                obj[key] = resultMapping[obj[key]]
                 hasReplacements = true
             }
         }
@@ -357,12 +357,11 @@ function printResults() {
     let missingCnt = ambigCount + notFoundCount
 
     log("Total amount of sample assignments in " + DELUGE_XML_PATHS.join(', ') + " XML Files: " + total, 'info')
-    if (missingCnt == 0) {
+    if (mappingCount == 0) {
         log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
     } else {
-        if (mappingCount > 0) {
-            log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
-        }
+        log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
+
         if (notFoundCount > 0) {
             let displ = missingReport.notFound.sort()
             log(displ.length + " samples are missing" + helpers.syntaxHighlight(displ), 'error')
@@ -370,8 +369,17 @@ function printResults() {
         if (ambigCount > 0) {
             log("Ambiguous samples, please resolve manually: " + helpers.syntaxHighlight(missingReport.ambiguous), 'error')
         }
-        log("These XML Files still contain invalid sample paths " + helpers.syntaxHighlight(getRelatedXmlFiles().sort()), 'error')
-        log("Fixed " + mappingCount + " invalid sample paths, " + (notFoundCount + ambigCount) + " are not fixed.", 'error')
+
+
+        let relatedXmls = getRelatedXmlFiles().sort()
+        if (relatedXmls.length > 0) {
+            log("These XML Files still contain invalid sample paths " + helpers.syntaxHighlight(getRelatedXmlFiles().sort()), 'error')
+        }
+        log("Fixed " + mappingCount + " invalid sample paths", 'success')
+
+        if (notFoundCount + ambigCount > 0) {
+            log((notFoundCount + ambigCount) + " are not fixed", 'error')
+        }
     }
 }
 

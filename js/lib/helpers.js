@@ -1,5 +1,4 @@
 const x2jsLib = require('x2js')
-const json2xml = require('json2xml')
 const x2js = new x2jsLib()
 
 exports.syntaxHighlight = function syntaxHighlight(obj) {
@@ -35,15 +34,14 @@ exports.toJson = function toJson(xml) {
     // cannot parse xml version statement :p
     xml = xml.replace(/<\?xml .*\?>/, '')
     // one root tag allowed, use wrapper
-    var json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap
+    let json = x2js.xml2js('<wrap>' + xml + '</wrap>').wrap
 
     return json
 }
 
 
 exports.toXml = function toXml(json) {
-    json = JSON.parse(json);
-    return '<?xml version="1.0" encoding="UTF-8"?>\n' + json2xml(json, "\t");
+    return '<?xml version="1.0" encoding="UTF-8"?>\n' + formatXml(x2js.js2xml(json));
 }
 
 
