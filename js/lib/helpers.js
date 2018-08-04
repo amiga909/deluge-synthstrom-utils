@@ -44,6 +44,10 @@ exports.toXml = function toXml(json) {
     return '<?xml version="1.0" encoding="UTF-8"?>\n' + formatXml(x2js.js2xml(json));
 }
 
+exports.intersect = function intersect(a, b) {
+      return [...new Set(a)].filter(x => new Set(b).has(x));
+}
+
 
 function formatXml(xml) {
     var formatted = '';

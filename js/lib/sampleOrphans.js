@@ -28,13 +28,12 @@ let log = null
 
 exports.run = function run(l, onSuccess) {
     log = l
-    //log('Working directory: ' + remote.app.getAppPath(), 'debug')
     if (!isRootDir(log)) {
         log("Exit.", 'error')
         return false
     }
+    log("Collecting all samples and analyzing Deluge XMLs, can take a while...")
     getAudioFileTree(function() {
-        //  console.log(existingSamples)
         findMissing()
         onSuccess()
     })
@@ -125,7 +124,6 @@ function getFileNameFromPath(str) {
 }
 
 function getAudioFileTree(onEnd, onError) {
-    log("Collecting all samples, can take a while...")
     let audioRegex = {
         wav: /\.WAV$/i,
         aif: /\.AIF$/i,
@@ -226,12 +224,10 @@ function createBackup(f, fP) {
 
 
 function fixJson(obj) {
-    console.log(resultMapping)
     hasReplacements = false
     objIterator.forAll(obj, function(path, key, obj) {
         if (key == DELUGE_FILENAME_PROP) {
             if (resultMapping[obj[key]]) {
-                //console.log("dsfsdf")
                 obj[key] = resultMapping[obj[key]]
                 hasReplacements = true
             }
@@ -330,14 +326,14 @@ function normalizePath(p) {
 
 function readXMLDirectory(dirname) {
     let files = {}
-    let sampleNames = []
+    //let sampleNames = []
     let filenames = fs.readdirSync(dirname)
 
     filenames.forEach(function(filename) {
         if (filename.match(/\.XML$/i) == null) {
             return
         }
-
+        let sampleNames = []
         let fP = path.normalize(dirname + "/" + filename)
         let buf = fs.readFileSync(fP, 'utf8')
         let json = helpers.toJson(buf)
@@ -355,9 +351,10 @@ function printResults() {
     let notFoundCount = missingReport.notFound.length || 0
     let mappingCount = Object.keys(resultMapping).length || 0
     let missingCnt = ambigCount + notFoundCount
-
+    //console.log(resultMapping)
+    //console.log("res")
     log("Total amount of sample assignments in " + DELUGE_XML_PATHS.join(', ') + " XML Files: " + total, 'info')
-    if (mappingCount == 0) {
+    if (mappingCount == 0 && missingCnt == 0) {
         log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
     } else {
         log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
@@ -371,9 +368,9 @@ function printResults() {
         }
 
 
-        let relatedXmls = getRelatedXmlFiles().sort()
-        if (relatedXmls.length > 0) {
-            log("These XML Files still contain invalid sample paths " + helpers.syntaxHighlight(getRelatedXmlFiles().sort()), 'error')
+        let relatedXmls = getRelatedXmlFiles()
+        if (Object.keys(relatedXmls).length) {
+            log("These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
         }
         log("Fixed " + mappingCount + " invalid sample paths", 'success')
 
@@ -384,7 +381,7 @@ function printResults() {
 }
 
 function getRelatedXmlFiles() {
-    let filenames = []
+    let result = {}
     let allAmbiguous = []
     for (let p in missingReport.ambiguous) {
         allAmbiguous.push(p)
@@ -393,15 +390,17 @@ function getRelatedXmlFiles() {
         let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach(function(file) {
             let testees = delugeXmls[folder][file].sampleNames
-            let intersectionNotFound = missingReport.notFound.filter(value => -1 !== testees.indexOf(value))
-            let intersectionAmbiguous = allAmbiguous.filter(value => -1 !== testees.indexOf(value))
-            if (intersectionNotFound.length > 0 || intersectionAmbiguous > 0) {
-                filenames.push(file)
+            let intersectionNotFound = missingReport.notFound.filter(v1 => -1 !== testees.indexOf(v1))
+            let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
+            let res = intersectionAmbiguous.concat(intersectionNotFound)
+           
+            if (res.length) {
+                result[file] = res;
             }
         })
     }
 
-    return filenames
+    return result
 }
 
 function onlyUnique(value, index, self) {
