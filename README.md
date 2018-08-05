@@ -1,6 +1,18 @@
 
 # Synthstrom Deluge maintenance utils
 
+## Fix missing samples
+### Platforms
+- Mac OSX, Linux, Windows 
+### Donwload App
+- Soon. Have to find a file host, Electron apps are easily over the Github limit.  
+### Run as NPM app
+- Clone this repository
+- cd js
+- npm install
+- electron .
+ 
+
 ## samplefixer.sh
 
 ### Platforms
