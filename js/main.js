@@ -1,5 +1,6 @@
-const { getCurrentWindow, globalShortcut } = require('electron').remote
+const { getCurrentWindow, globalShortcut, BrowserWindow } = require('electron').remote
 const electronShell = require('electron').shell
+
 const SamplePathParser = require('./lib/sampleOrphans')
 
 const BTN_COLORS = {
@@ -18,7 +19,8 @@ const css = {
     "console": "#console",
     "headerTitle": "#header-title",
     "footerGithub": '#footer-github',
-    "footerHelp": '#footer-help'
+    "footerHelp": '#footer-help',
+    "downloadReport": '#downloadReport'
 }
 
 let $dom = {}
@@ -89,6 +91,9 @@ function listen() {
         e.preventDefault()
         alert("Press Command+R to reload App. Command+Q to quit.")
     })
+  
+
+   
 }
 
 

@@ -308,7 +308,7 @@ function extractFileNames(obj, stack, fileName) {
                     }
                     let p = String(obj[property])
                     // Deluge bug, found some in older Songs, these files don't exist on the disk but Deluge manages to trace them somehow..
-                    if (p && p.match(/_~1\.WAV$/i) == null) {
+                    if (p && p.match(/~/) == null) {
                         stack.push(normalizePath(p))
                     }
                 }
@@ -372,10 +372,10 @@ function printResults() {
         if (Object.keys(relatedXmls).length) {
             log("These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
         }
-        log("Fixed " + mappingCount + " invalid sample paths", 'success')
+        log("Fixed " + mappingCount + " invalid samples", 'success')
 
         if (notFoundCount + ambigCount > 0) {
-            log((notFoundCount + ambigCount) + " are not fixed", 'error')
+            log((notFoundCount + ambigCount) + " samples are not fixed", 'error')
         }
     }
 }
