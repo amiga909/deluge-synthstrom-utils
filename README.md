@@ -4,14 +4,20 @@
 ## Fix missing samples
 ### Platforms
 - Mac OSX, Linux, Windows 
-### Donwload App
+### Want to fix your samples in Songs, Kits and Synths after moving around folders on your SD card? 
+- Analyzes your XML Files and looks for missing samples. 
+- Fixes your XML Files and reports which samples are missing. 
+- Generates report
+- A backup folder is created for overwritten files: _MISSING_SAMPLES_FIXER_ARCHIVE
+### Download App
 - Soon. Have to find a file host, Electron apps are easily over the Github limit.  
 ### Run as NPM app
 - Clone this repository
 - cd js
 - npm install
 - electron .
- 
+### Build app
+- npm run pack
 
 ## samplefixer.sh
 
