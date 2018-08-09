@@ -6,9 +6,10 @@
 - Mac OSX, Linux, Windows 
 ### Want to fix your samples in Songs, Kits and Synths after moving around folders on your SD card? 
 - Analyzes your XML Files and looks for missing samples. 
-- Fixes your XML Files and reports which samples are missing. 
-- Generates report
+- Fixes your XML Files and generates full report. 
 - A backup folder is created for overwritten files: _MISSING_SAMPLES_FIXER_ARCHIVE
+- Supported audio file extensions: .wav, .aif, .aiff
+- Samples with a '~' in their name are skipped: http://forums.synthstrom.com/discussion/1234/strange-sample-names-in-xml-files
 ### Download App
 - Soon. Have to find a file host, Electron apps are easily over the Github limit.  
 ### Run as NPM app
