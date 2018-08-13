@@ -54,9 +54,11 @@ function onStart() {
     //$dom.headerTitle.removeClass("header-title")
     $dom.thaButtonImg.attr("src", BTN_COLORS.blinking)
 
+    $("body").addClass("body-wait")
     let onSuccess = function() {
         $dom.thaButtonImg.attr("src", BTN_COLORS.green)
         $dom.headerText.html("Done")
+        $("body").removeClass("body-wait")
     }
     SamplePathParser.run(log, onSuccess)
 

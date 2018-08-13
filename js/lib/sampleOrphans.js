@@ -174,9 +174,9 @@ function getAudioFileTree(onEnd, onError) {
 
     walker.on("end", function() {
         if (totalFull == 0) {
-            log("Looks bad, no audio files found.", 'error')
+            log("Drek! No audio files found.", 'error')
         } else {
-            log("Done. Found " + totalFull + " audio files.")
+            log("Found " + totalFull + " audio files.")
             onEnd()
         }
 
@@ -373,33 +373,33 @@ function printResults() {
     let missingCnt = ambigCount + notFoundCount
     //console.log(resultMapping)
     //console.log("res")
-    log("Total amount of sample assignments in " + DELUGE_XML_PATHS.join(', ') + " XML Files: " + total, 'info')
+    log("Chummer, you got " + total + " sample assignments.", 'info')
     if (mappingCount == 0 && missingCnt == 0) {
-        log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
+        log("<br><br>Null sweat, all your sample paths are chill.", 'success')
     } else {
         skippedSamples = unique(skippedSamples)
         if (skippedSamples.length) {
-            log("Skipped " + skippedSamples.length + " sample(s) (8.3 Short File Paths): " + helpers.syntaxHighlight(skippedSamples), 'error')
+            log("Skipped " + skippedSamples.length + " sample(s) - fragged DOS 8.3 filenames: " + helpers.syntaxHighlight(skippedSamples), 'error')
         }
-        if(mappingCount) log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
+        if (mappingCount) log("<br><br>Nice run, omae. Fixed " + mappingCount + " sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
 
         if (notFoundCount > 0) {
             let displ = missingReport.notFound.sort()
-            log(displ.length + " samples are missing" + helpers.syntaxHighlight(displ), 'error')
+            log("Frag! " + displ.length + " samples are missing" + helpers.syntaxHighlight(displ), 'error')
         }
         if (ambigCount > 0) {
-            log("Ambiguous samples, please resolve manually: " + helpers.syntaxHighlight(missingReport.ambiguous), 'error')
+            log("Drek! Ambiguous samples, please resolve manually: " + helpers.syntaxHighlight(missingReport.ambiguous), 'error')
         }
 
 
         let relatedXmls = getRelatedXmlFiles()
         if (Object.keys(relatedXmls).length) {
-            log("These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
+            log("Frag! These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
         }
-        log("Fixed " + mappingCount + " invalid sample(s)", 'success')
+        log("Got your hoop chummer. Fixed " + mappingCount + " invalid sample(s)", 'success')
 
         if (notFoundCount + ambigCount > 0) {
-            log((notFoundCount + ambigCount) + " sample(s) are not fixed", 'error')
+            log("Drek! " + (notFoundCount + ambigCount) + " sample(s) are not fixed", 'error')
         }
 
     }
