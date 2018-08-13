@@ -10,6 +10,8 @@ const helpers = require('./helpers')
 const DELUGE_XML_PATHS = ["SONGS", "KITS", "SYNTHS"]
 const DELUGE_SAMPLES_PATH = "SAMPLES"
 const DELUGE_FILENAME_PROP = 'fileName'
+const DOS_8_3_FORMAT = /^\w{0,7}~[0-9]*\./i; // tries to recognize DOS 8.3 short file names. not cross platfrom, must be skipped. 
+
 
 let WORKING_DIR = remote.app.getAppPath() //process.cwd()
 let ARCHIVE_PATH = '__MISSING_SAMPLES_FIXER_ARCHIVE'
@@ -23,6 +25,7 @@ let missing = {}
 let resultMapping = {} // maps 1 missing -> 1 found
 let missingReport = { notFound: [], ambiguous: {} }
 let delugeXmls = {}
+let skippedSamples = []
 let $console = null
 let log = null
 
@@ -60,6 +63,7 @@ function isRootDir() {
         WORKING_DIR = path.normalize(WORKING_DIR + "/../../../../../")
         log("Changed Working Dir to " + WORKING_DIR, 'debug')
     }
+
     DELUGE_XML_PATHS.concat(DELUGE_SAMPLES_PATH).forEach(function(p) {
         if (!fs.existsSync(path.normalize(WORKING_DIR + "/" + p))) {
             missingDirs.push(p)
@@ -213,20 +217,23 @@ function writeXmlFile(xmlFile, fixedXml) {
         })
     }
 }
+
+
 function createBackupDir() {
-     let d = new Date(Date.now()).toLocaleString()
+    let d = new Date(Date.now()).toLocaleString()
     // one dir per minute
     let runDir = d.substring(0, d.length - 6).replace(/[\W_-]/g, '_')
 
-    let p = path.normalize(ARCHIVE_FULL_PATH + "/" + runDir)
-    mkdirp(p)
-    if (!fs.existsSync(p)) {
-        log("Could not create backup directory " + p, 'error')
+    ARCHIVE_FULL_PATH = path.normalize(ARCHIVE_FULL_PATH + "/" + runDir)
+    mkdirp(ARCHIVE_FULL_PATH)
+    if (!fs.existsSync(ARCHIVE_FULL_PATH)) {
+        log("Could not create backup directory " + ARCHIVE_FULL_PATH, 'error')
     }
-}
-function createBackup(f, fP) {
-    fs.writeFileSync(path.normalize(p + "/" + f), fs.readFileSync(fP))
 
+}
+
+function createBackup(f, fP) {
+    fs.writeFileSync(path.normalize(ARCHIVE_FULL_PATH + "/" + f), fs.readFileSync(fP))
 }
 
 
@@ -314,10 +321,15 @@ function extractFileNames(obj, stack, fileName) {
                         stack = []
                     }
                     let p = String(obj[property])
-                    // Deluge bug, found some in older Songs, these files don't exist on the disk but Deluge manages to trace them somehow..
-                    if (p && p.match(/~/) == null) {
-                        stack.push(normalizePath(p))
+                    // Deluge can produce 8.3 file names, which is not cross platfrom
+                    if (p) {
+                        if (p.match(DOS_8_3_FORMAT) == null) {
+                            stack.push(normalizePath(p))
+                        } else {
+                            skippedSamples.push(p)
+                        }
                     }
+
                 }
             }
         }
@@ -328,6 +340,7 @@ function normalizePath(p) {
     p = path.normalize(p)
     p = p.replace(/^SAMPLES\//, 'SAMPLES/')
     p = p.replace(/^\/SAMPLES\//, 'SAMPLES/')
+    p = normalizeFileExtension(p)
     return p
 }
 
@@ -364,7 +377,11 @@ function printResults() {
     if (mappingCount == 0 && missingCnt == 0) {
         log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
     } else {
-        if(mappingCount) {log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')}
+        skippedSamples = unique(skippedSamples)
+        if (skippedSamples.length) {
+            log("Skipped " + skippedSamples.length + " sample(s) (8.3 Short File Paths): " + helpers.syntaxHighlight(skippedSamples), 'error')
+        }
+        if(mappingCount) log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
 
         if (notFoundCount > 0) {
             let displ = missingReport.notFound.sort()
@@ -379,11 +396,12 @@ function printResults() {
         if (Object.keys(relatedXmls).length) {
             log("These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
         }
-        log("Fixed " + mappingCount + " invalid samples", 'success')
+        log("Fixed " + mappingCount + " invalid sample(s)", 'success')
 
         if (notFoundCount + ambigCount > 0) {
-            log((notFoundCount + ambigCount) + " samples are not fixed", 'error')
+            log((notFoundCount + ambigCount) + " sample(s) are not fixed", 'error')
         }
+
     }
 }
 
@@ -400,7 +418,7 @@ function getRelatedXmlFiles() {
             let intersectionNotFound = missingReport.notFound.filter(v1 => -1 !== testees.indexOf(v1))
             let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
             let res = intersectionAmbiguous.concat(intersectionNotFound)
-           
+
             if (res.length) {
                 result[file] = res;
             }
