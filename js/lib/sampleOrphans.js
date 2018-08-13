@@ -55,6 +55,11 @@ function isRootDir() {
         WORKING_DIR = path.normalize(WORKING_DIR + "/../../../../")
         log("Changed Working Dir to " + WORKING_DIR, 'debug')
     }
+    let fourUp = WORKING_DIR + "/../../../../../" + DELUGE_SAMPLES_PATH
+    if (fs.existsSync(fourUp)) {
+        WORKING_DIR = path.normalize(WORKING_DIR + "/../../../../../")
+        log("Changed Working Dir to " + WORKING_DIR, 'debug')
+    }
     DELUGE_XML_PATHS.concat(DELUGE_SAMPLES_PATH).forEach(function(p) {
         if (!fs.existsSync(path.normalize(WORKING_DIR + "/" + p))) {
             missingDirs.push(p)
@@ -86,6 +91,7 @@ function findMissing(onSuccess) {
     }
     getMissing()
     locateMissing()
+    createBackupDir()
     fixMissing()
     printResults()
 }
@@ -207,9 +213,8 @@ function writeXmlFile(xmlFile, fixedXml) {
         })
     }
 }
-
-function createBackup(f, fP) {
-    let d = new Date(Date.now()).toLocaleString()
+function createBackupDir() {
+     let d = new Date(Date.now()).toLocaleString()
     // one dir per minute
     let runDir = d.substring(0, d.length - 6).replace(/[\W_-]/g, '_')
 
@@ -218,6 +223,8 @@ function createBackup(f, fP) {
     if (!fs.existsSync(p)) {
         log("Could not create backup directory " + p, 'error')
     }
+}
+function createBackup(f, fP) {
     fs.writeFileSync(path.normalize(p + "/" + f), fs.readFileSync(fP))
 
 }
@@ -357,7 +364,7 @@ function printResults() {
     if (mappingCount == 0 && missingCnt == 0) {
         log("<br><br>Let's have a drink, all your sample paths are valid.", 'success')
     } else {
-        log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
+        if(mappingCount) {log("<br><br> Fixed sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')}
 
         if (notFoundCount > 0) {
             let displ = missingReport.notFound.sort()
