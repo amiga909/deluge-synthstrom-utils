@@ -10,10 +10,12 @@ const helpers = require('./helpers')
 const DELUGE_XML_PATHS = ["SONGS", "KITS", "SYNTHS"]
 const DELUGE_SAMPLES_PATH = "SAMPLES"
 const DELUGE_FILENAME_PROP = 'fileName'
-const DOS_8_3_FORMAT = /^\w{0,7}~[0-9]*\./i; // tries to recognize DOS 8.3 short file names. not cross platfrom, must be skipped. 
+
+// tries to recognize DOS 8.3 short file names. not cross platfrom, must be skipped. 
+const DOS_8_3_FORMAT = /~/ // /\w{0,7}~[0-9]{0,9}\./; 
 
 
-let WORKING_DIR = remote.app.getAppPath() //process.cwd()
+let WORKING_DIR = remote.app.getAppPath()
 let ARCHIVE_PATH = '__MISSING_SAMPLES_FIXER_ARCHIVE'
 let ARCHIVE_FULL_PATH = ''
 let total = 0
@@ -174,9 +176,8 @@ function getAudioFileTree(onEnd, onError) {
 
     walker.on("end", function() {
         if (totalFull == 0) {
-            log("Drek! No audio files found.", 'error')
+            log("Frag! No audio files found.", 'error')
         } else {
-            log("Found " + totalFull + " audio files.")
             onEnd()
         }
 
@@ -371,37 +372,28 @@ function printResults() {
     let notFoundCount = missingReport.notFound.length || 0
     let mappingCount = Object.keys(resultMapping).length || 0
     let missingCnt = ambigCount + notFoundCount
-    //console.log(resultMapping)
-    //console.log("res")
-    log("Chummer, you got " + total + " sample assignments.", 'info')
+
+    if (skippedSamples.length) {
+        log("Skipped " + skippedSamples.length + " sample(s). Full file path may not contain a '~' (Windows 8.3 short filenames)" + helpers.syntaxHighlight(unique(skippedSamples)), 'debug')
+    }
     if (mappingCount == 0 && missingCnt == 0) {
-        log("<br><br>Null sweat, all your sample paths are chill.", 'success')
+        log("<br><br>Null sweat, out of your " + total + " sample paths all are chill.", 'success')
     } else {
-        skippedSamples = unique(skippedSamples)
-        if (skippedSamples.length) {
-            log("Skipped " + skippedSamples.length + " sample(s) - fragged DOS 8.3 filenames: " + helpers.syntaxHighlight(skippedSamples), 'error')
-        }
-        if (mappingCount) log("<br><br>Nice run, omae. Fixed " + mappingCount + " sample paths" + helpers.syntaxHighlight(resultMapping), 'debug')
+        log("Nice run chummer!", 'info');
+        log("Total scanned audio files: " + totalFull, 'info')
+        log("Total XML Files: " + totalXmlFiles, 'info')
+        log("Total sample assignments: " + total, 'info')
 
-        if (notFoundCount > 0) {
-            let displ = missingReport.notFound.sort()
-            log("Frag! " + displ.length + " samples are missing" + helpers.syntaxHighlight(displ), 'error')
-        }
-        if (ambigCount > 0) {
-            log("Drek! Ambiguous samples, please resolve manually: " + helpers.syntaxHighlight(missingReport.ambiguous), 'error')
-        }
-
-
+        if (mappingCount) log("Fixed sample(s): " + mappingCount, 'success')        
+        if (notFoundCount + ambigCount > 0) log("Could not fix " + (notFoundCount + ambigCount) + " sample(s)", 'error')
+    
         let relatedXmls = getRelatedXmlFiles()
         if (Object.keys(relatedXmls).length) {
-            log("Frag! These XML Files contain invalid sample paths " + helpers.syntaxHighlight(relatedXmls), 'error')
+            log(" ")
+            log("Let's look at the wiz biz, chummer", 'info')
+            log("Report by XML File: "+helpers.syntaxHighlight(relatedXmls), 'info')
+            if (notFoundCount + ambigCount > 0) log("Missing report: "+helpers.syntaxHighlight(missingReport), 'info')
         }
-        log("Got your hoop chummer. Fixed " + mappingCount + " invalid sample(s)", 'success')
-
-        if (notFoundCount + ambigCount > 0) {
-            log("Drek! " + (notFoundCount + ambigCount) + " sample(s) are not fixed", 'error')
-        }
-
     }
 }
 
@@ -413,14 +405,17 @@ function getRelatedXmlFiles() {
     }
     for (let folder in delugeXmls) {
         let xmlFiles = Object.keys(delugeXmls[folder])
-        xmlFiles.forEach(function(file) {
+        xmlFiles.forEach((file) => {
             let testees = delugeXmls[folder][file].sampleNames
             let intersectionNotFound = missingReport.notFound.filter(v1 => -1 !== testees.indexOf(v1))
             let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
-            let res = intersectionAmbiguous.concat(intersectionNotFound)
-
-            if (res.length) {
-                result[file] = res;
+            let intersectionFixed = resultMapping[file] ? resultMapping[file].filter(v3 => -1 !== testees.indexOf(v3)) : []
+            let entry = {}
+            if (intersectionFixed.length) entry.fixed = intersectionFixed
+            if (intersectionNotFound.length) entry.notFound = intersectionNotFound
+            if (intersectionAmbiguous.length) entry.ambiguous = intersectionAmbiguous
+            if (Object.keys(entry).length) {
+                result[file] = entry;
             }
         })
     }

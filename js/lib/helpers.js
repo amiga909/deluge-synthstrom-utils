@@ -18,6 +18,14 @@ exports.syntaxHighlight = function syntaxHighlight(obj) {
         } else if (/null/.test(match)) {
             cls = 'null';
         }
+console.log(match)
+        if (String(match) == '"notFound":' || String(match) == '"ambiguous":') {
+            cls = 'error'
+        }
+        if (String(match) == '"fixed":') {
+            cls = 'success'
+        }
+
         return '<span class="' + cls + '">' + match + '</span>';
     });
     return "<pre>" + json + "</pre>";
@@ -45,7 +53,7 @@ exports.toXml = function toXml(json) {
 }
 
 exports.intersect = function intersect(a, b) {
-      return [...new Set(a)].filter(x => new Set(b).has(x));
+    return [...new Set(a)].filter(x => new Set(b).has(x));
 }
 
 
