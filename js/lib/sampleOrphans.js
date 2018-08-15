@@ -12,7 +12,7 @@ const DELUGE_SAMPLES_PATH = "SAMPLES"
 const DELUGE_FILENAME_PROP = 'fileName'
 
 // tries to recognize DOS 8.3 short file names. not cross platfrom, must be skipped. 
-const DOS_8_3_FORMAT = /~/ // /\w{0,7}~[0-9]{0,9}\./; 
+const DOS_8_3_FORMAT = /~/ // /\w{0,7}~[0-9]{0,9}\./
 
 
 let WORKING_DIR = remote.app.getAppPath()
@@ -77,7 +77,7 @@ function isRootDir() {
     }
 
     ARCHIVE_FULL_PATH = path.normalize(WORKING_DIR + '/' + ARCHIVE_PATH)
-    mkdirp(ARCHIVE_FULL_PATH);
+    mkdirp(ARCHIVE_FULL_PATH)
     if (!fs.existsSync(ARCHIVE_FULL_PATH)) {
         log("Could not create backup directory " + ARCHIVE_FULL_PATH, 'error')
         return false
@@ -153,7 +153,6 @@ function getAudioFileTree(onEnd, onError) {
             f.match(audioRegex.aiff) != null) {
             let p = normalizePath(path.join(basedir, f).replace(/.*\/SAMPLES\//, 'SAMPLES/'))
 
-            p = normalizeFileExtension(p)
             existingSamples[p] = 1
             let sampleName = getFileNameFromPath(p)
 
@@ -162,7 +161,7 @@ function getAudioFileTree(onEnd, onError) {
             } else {
                 uniqueSampleNames[sampleName] = [p]
             }
-            // if (p.match(/808 Rim/) != null) {console.log("pp ", p)}
+
             totalFull++
         }
         next()
@@ -181,7 +180,7 @@ function getAudioFileTree(onEnd, onError) {
             onEnd()
         }
 
-    });
+    })
 }
 
 function fixMissing() {
@@ -255,17 +254,25 @@ function locateMissing() {
     for (let xmlFile in missing) {
         let samplePaths = missing[xmlFile]
         samplePaths.forEach(function(p) {
-            let name = normalizeFileExtension(getFileNameFromPath(p))
+            let name = getFileNameFromPath(p)
+            if (skippedSamples.includes(p)) { return true }
             if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
                 resultMapping[p] = uniqueSampleNames[name]
-                //log("Move " + p + " to " + uniqueSampleNames[name], 'debug')
+               // log("locateMissing: Move " + p + " to " + uniqueSampleNames[name], 'debug')
                 //console.log("f unique replacement")
             } else {
+                let normName = normalizeFileExtension(name)
+                if (uniqueSampleNames[normName] && uniqueSampleNames[normName].length == 1) {
+                    resultMapping[p] = uniqueSampleNames[normName]
+                    //log("locateMissing: File extension corrected Move " + p + " to " + uniqueSampleNames[name], 'debug')
+                    //console.log("f unique replacement")
+                }
                 if (uniqueSampleNames[name]) {
                     missingReport.ambiguous[p] = uniqueSampleNames[name]
                 } else {
                     missingReport.notFound.push(p)
                 }
+
             }
         })
     }
@@ -322,15 +329,12 @@ function extractFileNames(obj, stack, fileName) {
                         stack = []
                     }
                     let p = String(obj[property])
-                    // Deluge can produce 8.3 file names, which is not cross platfrom
                     if (p) {
-                        if (p.match(DOS_8_3_FORMAT) == null) {
-                            stack.push(normalizePath(p))
-                        } else {
+                        stack.push(normalizePath(p))
+                        if (p.match(DOS_8_3_FORMAT) != null) {
                             skippedSamples.push(p)
                         }
                     }
-
                 }
             }
         }
@@ -341,7 +345,6 @@ function normalizePath(p) {
     p = path.normalize(p)
     p = p.replace(/^SAMPLES\//, 'SAMPLES/')
     p = p.replace(/^\/SAMPLES\//, 'SAMPLES/')
-    p = normalizeFileExtension(p)
     return p
 }
 
@@ -379,20 +382,21 @@ function printResults() {
     if (mappingCount == 0 && missingCnt == 0) {
         log("<br><br>Null sweat, out of your " + total + " sample paths all are chill.", 'success')
     } else {
-        log("Nice run chummer!", 'info');
-        log("Total scanned audio files: " + totalFull, 'info')
-        log("Total XML Files: " + totalXmlFiles, 'info')
-        log("Total sample assignments: " + total, 'info')
+        log("Nice run, chummer.", 'info')
+        log(totalFull + " total scanned audio files", 'info')
+        log(totalXmlFiles + " total XML files", 'info')
+        log(total + " total sample assignments", 'info')
 
-        if (mappingCount) log("Fixed sample(s): " + mappingCount, 'success')        
-        if (notFoundCount + ambigCount > 0) log("Could not fix " + (notFoundCount + ambigCount) + " sample(s)", 'error')
-    
+        if (mappingCount) log(mappingCount + " sample(s) fixed", 'success')
+        if (notFoundCount + ambigCount > 0) log((notFoundCount + ambigCount) + " sample(s) not fixed", 'error')
+
         let relatedXmls = getRelatedXmlFiles()
         if (Object.keys(relatedXmls).length) {
             log(" ")
-            log("Let's look at the wiz biz, chummer", 'info')
-            log("Report by XML File: "+helpers.syntaxHighlight(relatedXmls), 'info')
-            if (notFoundCount + ambigCount > 0) log("Missing report: "+helpers.syntaxHighlight(missingReport), 'info')
+            log("Have a look at the wiz biz, chummer.", 'info')
+            log("Report by XML File: " + helpers.syntaxHighlight(relatedXmls), 'info')
+            if (mappingCount) log("Fixed sample path(s): " + helpers.syntaxHighlight(resultMapping), 'success')
+            if (notFoundCount + ambigCount > 0) log("Missing report: " + helpers.syntaxHighlight(missingReport), 'info')
         }
     }
 }
@@ -410,12 +414,16 @@ function getRelatedXmlFiles() {
             let intersectionNotFound = missingReport.notFound.filter(v1 => -1 !== testees.indexOf(v1))
             let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
             let intersectionFixed = resultMapping[file] ? resultMapping[file].filter(v3 => -1 !== testees.indexOf(v3)) : []
+            let intersectionSkipped = skippedSamples.filter(v4 => -1 !== testees.indexOf(v4))
+            //console.log(intersectionFixed, intersectionSkipped, intersectionAmbiguous, intersectionNotFound)
             let entry = {}
             if (intersectionFixed.length) entry.fixed = intersectionFixed
             if (intersectionNotFound.length) entry.notFound = intersectionNotFound
             if (intersectionAmbiguous.length) entry.ambiguous = intersectionAmbiguous
+            if (intersectionSkipped.length) entry.skipped = intersectionSkipped
+            console.log(entry)
             if (Object.keys(entry).length) {
-                result[file] = entry;
+                result[file] = entry
             }
         })
     }

@@ -18,12 +18,15 @@ exports.syntaxHighlight = function syntaxHighlight(obj) {
         } else if (/null/.test(match)) {
             cls = 'null';
         }
-console.log(match)
+
         if (String(match) == '"notFound":' || String(match) == '"ambiguous":') {
             cls = 'error'
         }
-        if (String(match) == '"fixed":') {
+        else if (String(match) == '"fixed":') {
             cls = 'success'
+        }
+        else if (String(match) == '"skipped":') {
+            cls = 'error'
         }
 
         return '<span class="' + cls + '">' + match + '</span>';
