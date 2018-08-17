@@ -16,7 +16,7 @@ const DOS_8_3_FORMAT = /~/ // /\w{0,7}~[0-9]{0,9}\./
 
 
 let WORKING_DIR = remote.app.getAppPath()
-let ARCHIVE_PATH = '__MISSING_SAMPLES_FIXER_ARCHIVE'
+let ARCHIVE_PATH = 'DelugeFixMissingSamplesArchive'
 let ARCHIVE_FULL_PATH = ''
 let total = 0
 let totalFull = 0
@@ -28,7 +28,6 @@ let resultMapping = {} // maps 1 missing -> 1 found
 let missingReport = { notFound: [], ambiguous: {} }
 let delugeXmls = {}
 let skippedSamples = []
-let $console = null
 let log = null
 
 exports.run = function run(l, onSuccess) {
@@ -42,6 +41,7 @@ exports.run = function run(l, onSuccess) {
         findMissing()
         onSuccess()
     })
+    return true
 }
 
 // may set working dir
@@ -86,7 +86,7 @@ function isRootDir() {
     return true
 }
 
-function findMissing(onSuccess) {
+function findMissing() {
     DELUGE_XML_PATHS.forEach(function(p) {
         delugeXmls[p] = parseFilenames(p)
     })
@@ -109,12 +109,8 @@ function getMissing() {
             let testees = delugeXmls[folder][file].sampleNames
             testees.forEach(function(audioFile) {
                 let norm = audioFile
-                if (existingSamples[norm] == 1) {
-                    //console.log(norm + " exists")
-                    // console.log(existingSamples[norm])
-                } else {
-                    // console.log(existingSamples[norm], norm)
-
+                console.log("norm", norm, "existingSamples[norm]", existingSamples[norm])
+                if (existingSamples[norm] === 1) {} else {
                     if (missing[file]) {
                         missing[file].push(audioFile)
                     } else {
@@ -221,8 +217,8 @@ function writeXmlFile(xmlFile, fixedXml) {
 
 function createBackupDir() {
     let d = new Date(Date.now()).toLocaleString()
-    // one dir per minute
-    let runDir = d.substring(0, d.length - 6).replace(/[\W_-]/g, '_')
+    // one dir per sec
+    let runDir = d.substring(0, d.length - 3).replace(/[\W_-]/g, '_')
 
     ARCHIVE_FULL_PATH = path.normalize(ARCHIVE_FULL_PATH + "/" + runDir)
     mkdirp(ARCHIVE_FULL_PATH)
@@ -234,6 +230,10 @@ function createBackupDir() {
 
 function createBackup(f, fP) {
     fs.writeFileSync(path.normalize(ARCHIVE_FULL_PATH + "/" + f), fs.readFileSync(fP))
+}
+
+function createReport(data) {
+    fs.writeFileSync(path.normalize(ARCHIVE_FULL_PATH + "/report.html"), data)
 }
 
 
@@ -255,18 +255,15 @@ function locateMissing() {
         let samplePaths = missing[xmlFile]
         samplePaths.forEach(function(p) {
             let name = getFileNameFromPath(p)
-            if (skippedSamples.includes(p)) { return true }
+            if (skippedSamples.includes(p)) {
+                console.log("skip missing sample " + p)
+                return true
+            }
+
             if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
                 resultMapping[p] = uniqueSampleNames[name]
-               // log("locateMissing: Move " + p + " to " + uniqueSampleNames[name], 'debug')
-                //console.log("f unique replacement")
             } else {
-                let normName = normalizeFileExtension(name)
-                if (uniqueSampleNames[normName] && uniqueSampleNames[normName].length == 1) {
-                    resultMapping[p] = uniqueSampleNames[normName]
-                    //log("locateMissing: File extension corrected Move " + p + " to " + uniqueSampleNames[name], 'debug')
-                    //console.log("f unique replacement")
-                }
+                //fixFileExtensionCase(p)
                 if (uniqueSampleNames[name]) {
                     missingReport.ambiguous[p] = uniqueSampleNames[name]
                 } else {
@@ -280,22 +277,43 @@ function locateMissing() {
     disambiguateSamples()
 }
 
+
+// deactivate: too greedy
+// is match if: same path, same file extension, but file extension differs in lower/uppercase
+function fixFileExtensionCase(testee) {
+    let ext, sName = ''
+    let parts = testee.split('.') 
+    if (parts && parts.length > 1) {
+        ext = parts[parts.length - 1].toLowerCase()
+        if (ext == 'wav' || ext == 'aif' || ext == 'aiff') {
+            sName = parts.slice(0, parts.length - 1) + '.'
+            let variants = helpers.getAllCasePermutations(ext)
+            variants.forEach((variant) => {
+                console.log(sName)
+                console.log(variant)
+                let vpath = path.normalize(sName + variant)
+                console.log("sName + variant",vpath, "uniqueSampleNames", uniqueSampleNames)
+                if (uniqueSampleNames[vpath] && uniqueSampleNames[vpath].length == 1) {
+                    console.log("---- FOUND")
+                    resultMapping[testee] = uniqueSampleNames[vpath]
+                }
+            })
+        }
+    }
+}
+
+
 function disambiguateSamples() {
-    //console.log(missingReport.ambiguous)
     for (let p in missingReport.ambiguous) {
         // if there is sample that has the same parent folder and the others do not, take this
-        //console.log(p)
         let parentFolder = getParentFolder(p)
         let pleaseJustOne = missingReport.ambiguous[p].filter(function(c) {
             return getParentFolder(c) == parentFolder
         })
-        //console.log(pleaseJustOne)
         if (pleaseJustOne && pleaseJustOne.length == 1) {
-            //console.log("aiks deduped", p)
             delete missingReport.ambiguous[p]
             uniqueSampleNames[p] = pleaseJustOne[0]
             missingReport.notFound[p] = [pleaseJustOne[0]]
-            //log("Move " + p + " to " + map[p], 'debug')
         }
     }
 }
@@ -376,6 +394,7 @@ function printResults() {
     let mappingCount = Object.keys(resultMapping).length || 0
     let missingCnt = ambigCount + notFoundCount
 
+   
     if (skippedSamples.length) {
         log("Skipped " + skippedSamples.length + " sample(s). Full file path may not contain a '~' (Windows 8.3 short filenames)" + helpers.syntaxHighlight(unique(skippedSamples)), 'debug')
     }
@@ -399,6 +418,8 @@ function printResults() {
             if (notFoundCount + ambigCount > 0) log("Missing report: " + helpers.syntaxHighlight(missingReport), 'info')
         }
     }
+   
+    createReport($("#console").html())
 }
 
 function getRelatedXmlFiles() {
@@ -415,13 +436,13 @@ function getRelatedXmlFiles() {
             let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
             let intersectionFixed = resultMapping[file] ? resultMapping[file].filter(v3 => -1 !== testees.indexOf(v3)) : []
             let intersectionSkipped = skippedSamples.filter(v4 => -1 !== testees.indexOf(v4))
-            //console.log(intersectionFixed, intersectionSkipped, intersectionAmbiguous, intersectionNotFound)
+       
             let entry = {}
             if (intersectionFixed.length) entry.fixed = intersectionFixed
             if (intersectionNotFound.length) entry.notFound = intersectionNotFound
             if (intersectionAmbiguous.length) entry.ambiguous = intersectionAmbiguous
             if (intersectionSkipped.length) entry.skipped = intersectionSkipped
-            console.log(entry)
+          
             if (Object.keys(entry).length) {
                 result[file] = entry
             }

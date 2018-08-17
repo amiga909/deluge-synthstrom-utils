@@ -21,11 +21,9 @@ exports.syntaxHighlight = function syntaxHighlight(obj) {
 
         if (String(match) == '"notFound":' || String(match) == '"ambiguous":') {
             cls = 'error'
-        }
-        else if (String(match) == '"fixed":') {
+        } else if (String(match) == '"fixed":') {
             cls = 'success'
-        }
-        else if (String(match) == '"skipped":') {
+        } else if (String(match) == '"skipped":') {
             cls = 'error'
         }
 
@@ -57,6 +55,21 @@ exports.toXml = function toXml(json) {
 
 exports.intersect = function intersect(a, b) {
     return [...new Set(a)].filter(x => new Set(b).has(x));
+}
+
+exports.getAllCasePermutations = function getAllCasePermutations(str) {
+    let results = [];
+    let arr = str.split("");
+    let len = Math.pow(arr.length, 2);
+
+    for (let i = 0; i < len; i++) {
+        for (let k = 0, j = i; k < arr.length; k++, j >>= 1) {
+            arr[k] = (j & 1) ? arr[k].toUpperCase() : arr[k].toLowerCase();
+        }
+        let combo = arr.join("");
+        results.push(combo);
+    }
+    return results;
 }
 
 
