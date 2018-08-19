@@ -1,7 +1,10 @@
 const { getCurrentWindow, globalShortcut, BrowserWindow } = require('electron').remote
 const electronShell = require('electron').shell
+const path = require('path')
 
+const terminal = require('./lib/terminal')
 const SamplePathParser = require('./lib/sampleOrphans')
+
 
 const BTN_COLORS = {
     'blank': 'assets/b_off.png',
@@ -20,18 +23,38 @@ const css = {
     "headerTitle": "#header-title",
     "footerGithub": '#footer-github',
     "footerHelp": '#footer-help',
-    "downloadReport": '#downloadReport'
+    "downloadReport": '#downloadReport',
+    "lineActive": '.line--active'
 }
 
 let $dom = {}
+let WORKING_DIR = ''
 
+
+$(document).ready(() => {
+    WORKING_DIR = SamplePathParser.isRootDir(log)
+    if (!WORKING_DIR) {
+        return false
+    }
+    init()
+    // onStart() // DEBUG
+    fancyIntro()
+})
 
 function init() {
+    let callbacks = {
+        'onStart': onStart,
+        'onReload': getCurrentWindow().reload,
+        'onQuit': getCurrentWindow().close
+    }
+    terminal.init(callbacks)
     for (let element in css) {
         $dom[element] = $(css[element])
     }
+    //$dom.lineActive.addClass('line--active-animated')
 
     listen()
+
 }
 
 function log(msg, style) {
@@ -46,22 +69,24 @@ function log(msg, style) {
     } else if (style == 'debug') {
         msg = '<span class="msg_debug">' + msg + '</span>'
     }
-    msg = msg + "<br/>"
-    $dom.console.append(msg)
+    //msg = msg + "<br/>"
+    terminal.addLine(msg)
+    //$dom.console.append(msg)
 }
-
+let writeMapping = {}
 function onStart() {
-    //$dom.headerTitle.removeClass("header-title")
+    $dom.lineActive.removeClass('line--active-animated')
     $dom.thaButtonImg.attr("src", BTN_COLORS.blinking)
 
     $("body").addClass("body-wait")
-    let onSuccess = function() {
+    let onSuccess = () => {
         $dom.thaButtonImg.attr("src", BTN_COLORS.green)
-        $dom.headerText.html("Done")
+        $dom.headerText.slideUp(250)
         $("body").removeClass("body-wait")
+        //$dom.lineActive.addClass('line--active-animated')
     }
-    SamplePathParser.run(log, onSuccess)
 
+   SamplePathParser.run(log, onSuccess)
 }
 
 function listen() {
@@ -77,7 +102,7 @@ function listen() {
         $dom.thaButton.off("click")
         $dom.thaButton.off("mouseover")
         $dom.thaButton.off("mouseout")
-        $dom.thaButton.on("click", function() {
+        $dom.thaButton.on("click", () => {
             let r = confirm("Reload App?")
             if (r === true) {
                 getCurrentWindow().reload()
@@ -93,38 +118,26 @@ function listen() {
         e.preventDefault()
         alert("Press Command+R to reload App. Command+Q to quit.")
     })
-  
-
-   
 }
 
-
-$(document).ready(function() {
-    init()
-   // onStart() // DEBUG
-    fancyIntro()
-})
-
-
-
 function fancyIntro() {
-    let setBlur = function(ele, radius) {
+    let setBlur = (ele, radius) => {
         $(ele).css({
             "-webkit-filter": "blur(" + radius + "px)",
             "filter": "blur(" + radius + "px)"
         });
     }
 
-    let tweenBlur = function(ele, startRadius, endRadius) {
+    let tweenBlur = (ele, startRadius, endRadius) => {
         $({ blurRadius: startRadius }).animate({ blurRadius: endRadius }, {
             duration: 500,
             easing: 'swing', // or "linear"
             // use jQuery UI or Easing plugin for more options
-            step: function() {
+            step: () => {
                 setBlur(ele, this.blurRadius)
                 $dom.backgroundImage.show()
             },
-            complete: function() {
+            complete: () => {
                 // Final callback to set the target blur radius
                 // jQuery might not reach the end value
                 setBlur(ele, endRadius)
@@ -137,30 +150,20 @@ function fancyIntro() {
     $dom.headerText.hide()
     $dom.thaButton.hide()
 
-    window.setTimeout(function() {
+    window.setTimeout(() => {
         tweenBlur(css.backgroundImage, 0, 20)
     }, 100)
 
 
-    window.setTimeout(function() {
+    window.setTimeout(() => {
         tweenBlur($dom.headerText, 20, 0)
         $content.show()
         $dom.headerText.show()
     }, 1000)
 
-    window.setTimeout(function() {
+    window.setTimeout(() => {
         tweenBlur($dom.thaButton, 20, 0)
 
         $dom.thaButton.show()
     }, 1500)
-
-    /*
-        window.setInterval(function() {
-            tweenBlur(".background-image", 15, 10);  
-        }, 3000 + Math.floor((Math.random() * 2500) + 1)    );
-         
-        window.setInterval(function() {
-            tweenBlur(".background-image", 10, 15);  
-        }, 3000+ Math.floor((Math.random() * 2500) + 1));
-    */
 }

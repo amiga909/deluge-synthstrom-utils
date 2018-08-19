@@ -1,12 +1,29 @@
 const x2jsLib = require('x2js')
 const x2js = new x2jsLib()
 
+var reA = /[^a-zA-Z]/g;
+var reN = /[^0-9]/g;
+
+function sortAlphaNumFnc(a, b) {
+    var aA = a.replace(reA, "");
+    var bA = b.replace(reA, "");
+    if (aA === bA) {
+        var aN = parseInt(a.replace(reN, ""), 10);
+        var bN = parseInt(b.replace(reN, ""), 10);
+        return aN === bN ? 0 : aN > bN ? 1 : -1;
+    } else {
+        return aA > bA ? 1 : -1;
+    }
+}
+exports.sortAlphaNum = function sortAlphaNum(arr) {
+    return arr.sort(sortAlphaNum);
+}
 exports.syntaxHighlight = function syntaxHighlight(obj) {
     let json = JSON.stringify(obj, undefined, 4)
 
     json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     json = json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
-        var cls = 'number';
+        let cls = 'number';
         if (/^"/.test(match)) {
             if (/:$/.test(match)) {
                 cls = 'key';
@@ -74,12 +91,12 @@ exports.getAllCasePermutations = function getAllCasePermutations(str) {
 
 
 function formatXml(xml) {
-    var formatted = '';
-    var reg = /(>)(<)(\/*)/g;
+    let formatted = '';
+    let reg = /(>)(<)(\/*)/g;
     xml = xml.replace(reg, '$1\r\n$2$3');
-    var pad = 0;
+    let pad = 0;
     jQuery.each(xml.split('\r\n'), function(index, node) {
-        var indent = 0;
+        let indent = 0;
         if (node.match(/.+<\/\w[^>]*>$/)) {
             indent = 0;
         } else if (node.match(/^<\/\w/)) {
@@ -92,8 +109,8 @@ function formatXml(xml) {
             indent = 0;
         }
 
-        var padding = '';
-        for (var i = 0; i < pad; i++) {
+        let padding = '';
+        for (let i = 0; i < pad; i++) {
             padding += '  ';
         }
 

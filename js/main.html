@@ -14,20 +14,20 @@ window.$ = window.jQuery = require('jquery');
 * {
     box-sizing: border-box;
     color: #ebebeb; // white; //#2e3830;
-    font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    text-align: center;
+    //text-align: center;
 }
 
 .body-wait {
-cursor: wait;
+    cursor: wait;
 }
 
 
 .container {
-   
+    font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 .header-title {
+    text-align: center;
     letter-spacing: 10px;
     text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #ff2d95, 0 0 30px #ff2d95, 0 0 40px #ff2d95, 0 0 50px #ff2d95, 0 0 75px #ff2d95;
 }
@@ -37,6 +37,7 @@ cursor: wait;
 }
 
 h1 {
+    text-align: center;
     letter-spacing: 5px;
     color: #e6dbc9;
     font-size: 42px;
@@ -44,7 +45,7 @@ h1 {
 }
 
 h3 {
-    //color: white;
+    text-align: center; //color: white;
     font-size: 32px;
     letter-spacing: 5px;
     padding: 0px;
@@ -52,6 +53,7 @@ h3 {
 }
 
 h4 {
+    text-align: center;
     font-size: 24px;
     letter-spacing: 5px;
     padding: 0px text-shadow: 0 0 1px #ff2d95
@@ -59,8 +61,8 @@ h4 {
 
 .background-image {
     background-image: url('assets/deluge_heart_sym.png');
-   background-size: cover;//100%;
-   background-position: -220px 0px; 
+    background-size: cover; //100%;
+    background-position: -220px 0px;
     display: block;
     height: 100%;
 
@@ -86,6 +88,7 @@ h4 {
 }
 
 .footer {
+    font-family: 'Karla', 'Helvetica Neue', Helvetica, Arial, sans-serif;
     position: fixed;
     z-index: 99;
     top: 0;
@@ -128,21 +131,18 @@ h4 {
     margin-bottom: 10px;
 }
 
-#console {
-    text-align: left;
-    padding: 10px;
-    font-size: 18px;
-}
+
 #donwloadReport {
-    display:none;
-    background-color: #F0F0F0; 
-    color: black; 
+    display: none;
+    background-color: #F0F0F0;
+    color: black;
     font-size: 16px;
 }
+
 button:hover {
-   //color: #0000FF; 
-   cursor: pointer;
-   text-decoration: underline;
+    //color: #0000FF; 
+    cursor: pointer;
+    text-decoration: underline;
 }
 
 .msg_info {
@@ -187,15 +187,117 @@ pre {
 .key {
     color: grey;
 }
+
 .error {
     color: #FF0000;
 }
+
 .success {
     color: #00FF00;
 }
+
+
+
+
+
+#console {
+    font-family: monospace;
+    font-size: 14px;
+    padding: 10px;
+    font-size: 18px;
+}
+
+p {
+    line-height: 1.4em;
+    margin: 0;
+}
+
+.line:before {
+    //content: attr(data-user)"@"attr(data-host)":"attr(data-path)"# ";
+}
+
+.line--active:after {
+    background: rgba(255, 255, 255, 0.3);
+    color: transparent;
+    content: 'x';
+}
+
+.line--active-animated:after {
+    -webkit-animation: 1s blink step-end infinite;
+    -moz-animation: 1s blink step-end infinite;
+    -ms-animation: 1s blink step-end infinite;
+    -o-animation: 1s blink step-end infinite;
+    animation: 1s blink step-end infinite;
+}
+
+.cursor {
+    background: rgba(255, 255, 255, 0.3);
+    color: transparent;
+    content: ".";
+}
+
+.green {
+    color: lime;
+}
+
+.red {
+    color: red;
+}
+
+@keyframes "blink" {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+@-moz-keyframes blink {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+@-webkit-keyframes "blink" {
+    from,
+    to {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+@-ms-keyframes "blink" {
+    from,
+    to {
+        color: transparent;
+    }
+    50% {
+        color: rgba(255, 255, 255, 0.3);
+    }
+}
+
+@-o-keyframes "blink" {
+    from,
+    to {
+        color: transparent;
+    }
+    50% {
+        color: rgba(255, 255, 255, 0.3);
+    }
+}
+
 </style>
 
 <body>
+   
     <div class="container">
         <div style="display:none;" class="background-image"></div>
         <div class="content">
@@ -203,25 +305,26 @@ pre {
                 <h1 id="header-title" class="header-title">
                      FIND&FIX MISSING SAMPLES
                    </h1>
+                   <div style="width:200px"id="wavesurfer"></div>
                 <span class="header-intro">
-            <h4 id="header-intro-text">Press button</h4>
+
+
+            <h4 id="header-intro-text">Press button or type 'start'</h4>
             </span>
             </div>
             <div id="button-container" class="button-container">
                 <img id="thaButton" src="assets/b_off.png">
             </div>
             <div id="console-wrapper" class="">
-                <div id="console" class="">
-                    <!-- <button id="donwloadReport">Download report</button> -->
-                </div>
-
+                <div id="console"></div>
+                <!-- <button id="donwloadReport">Download report</button> -->
             </div>
             <br/>
             <br/>
         </div>
     </div>
     <div class="footer">
-        <a id="footer-github">v0.9</a> |
+        <a id="footer-github">v0.2</a> |
         <a id="footer-help">Help</a>
     </div>
 </body>

@@ -14,7 +14,7 @@ app.once('ready', (document) => {
     submenu: [
         //{ label: "About Application", selector: "orderFrontStandardAboutPanel:" },
         { type: "separator" },
-        { label: "Quit", accelerator: "Command+Q", click: function() { app.quit(); }},
+        { label: "Quit", accelerator: "Command+Q", click: () =>{ app.quit(); }},
        
     ]}, {
     label: "Edit",
@@ -35,7 +35,7 @@ Menu.setApplicationMenu(Menu.buildFromTemplate(template));
     if (isDev) mainWindow.webContents.openDevTools()
 })
 
-app.on('window-all-closed', function() {
+app.on('window-all-closed', () => {
     app.quit();
 });
 
