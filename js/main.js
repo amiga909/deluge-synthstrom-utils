@@ -5,7 +5,6 @@ const path = require('path')
 const terminal = require('./lib/terminal')
 const SamplePathParser = require('./lib/sampleOrphans')
 
-
 const BTN_COLORS = {
     'blank': 'assets/b_off.png',
     'green': 'assets/b_green.png',
@@ -37,7 +36,7 @@ $(document).ready(() => {
         return false
     }
     init()
-    // onStart() // DEBUG
+     onStart() // DEBUG
     fancyIntro()
 })
 

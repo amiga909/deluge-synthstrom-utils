@@ -30,7 +30,7 @@ let uniqueSampleNames = {}
 let missing = {}
 let resultMapping = {} // maps 1 missing -> 1 found
 let writeMapping = {} // xmlFile: {missing: [candidates], confirmed: candidate}
-let missingReport = { notFound: [], ambiguous: {} }
+let missingReport = { notFound: [] }
 let delugeXmls = {}
 let skippedSamples = []
 let log = null
@@ -103,21 +103,25 @@ function findMissing() {
     locateMissing()
 
     createBackupDir()
-
-
-
     // INTERACTIVE FIXING..
+    printResults()
+
     getWriteMapping()
-       sampleResolver.run(WORKING_DIR, writeMapping)
+console.log("writeMapping")
+
+console.log( missing  )
+
     fixInteractive()
     //fixMissing()
-    printResults()
+
 }
 
 function fixInteractive() {
-    // foreach xmls, look if mapping exists 
-    log("interactive fix mode, load audios and let user choose")
-    //log("<span id='interactiveMode'>" + helpers.syntaxHighlight(writeMapping) + "</span>")
+    log("....")
+    log("Let's fix some samples.")
+    log("Use KeyUp and KeyDown to navigate XML Files. Use KeyLeft and KeyRight to navigate samples. Type a number to confirm a replacement.", '')
+
+    sampleResolver.run(WORKING_DIR, writeMapping)
 
 }
 
@@ -133,6 +137,7 @@ function getWriteMapping() {
                     entry[audioFile] = resultMapping[audioFile]
                     if (writeMapping[file]) {
                         writeMapping[file].push(entry)
+                        writeMapping[file] = unique(writeMapping[file])
                     } else {
                         writeMapping[file] = [entry]
                     }
@@ -294,32 +299,18 @@ function locateMissing() {
                 console.log("skip missing sample " + p)
                 return true
             }
-            if (!uniqueSampleNames[name]) {
-                log(p + " was not found, this sample is lost", 'debug')
-                return true
-            }
-            if (resultMapping[p]) {
-                resultMapping[p].push(uniqueSampleNames[name])
-                resultMapping[p] = helpers.sortAlphaNum(resultMapping[p])
+            let sampleNameMatches = uniqueSampleNames[name]
+
+            if (!sampleNameMatches) {
+                missingReport.notFound.push(p)
             } else {
-                resultMapping[p] = [uniqueSampleNames[name]]
+                resultMapping[p] = helpers.sortAlphaNum(sampleNameMatches)
             }
-            /*
-                        if (uniqueSampleNames[name] && uniqueSampleNames[name].length == 1) {
-                            resultMapping[p] = uniqueSampleNames[name]
-                        } else {
-                            //fixFileExtensionCase(p)
-                            if (uniqueSampleNames[name]) {
-                                missingReport.ambiguous[p] = uniqueSampleNames[name]
-                            } else {
-                                missingReport.notFound.push(p)
-                            }
-                        }
-                        */
+
+
         })
     }
     missingReport.notFound = unique(missingReport.notFound)
-    //disambiguateSamples()
 }
 
 
@@ -346,23 +337,6 @@ function fixFileExtensionCase(testee) {
         }
     }
 }
-
-
-function disambiguateSamples() {
-    for (let p in missingReport.ambiguous) {
-        // if there is sample that has the same parent folder and the others do not, take this
-        let parentFolder = getParentFolder(p)
-        let pleaseJustOne = missingReport.ambiguous[p].filter((c) => {
-            return getParentFolder(c) == parentFolder
-        })
-        if (pleaseJustOne && pleaseJustOne.length == 1) {
-            delete missingReport.ambiguous[p]
-            uniqueSampleNames[p] = pleaseJustOne[0]
-            missingReport.notFound[p] = [pleaseJustOne[0]]
-        }
-    }
-}
-
 
 function getParentFolder(fP) {
     let parts = fP.split('/')
@@ -434,10 +408,8 @@ function readXMLDirectory(dirname) {
 }
 
 function printResults() {
-    let ambigCount = Object.keys(missingReport.ambiguous).length || 0
     let notFoundCount = missingReport.notFound.length || 0
     let mappingCount = Object.keys(resultMapping).length || 0
-    let missingCnt = ambigCount + notFoundCount
     let msg = ''
     let stats = `
     ${totalFull} total scanned audio file(s) <br>
@@ -453,20 +425,23 @@ function printResults() {
         log(stats, 'info')
 
     } else {
-        log("This run was fragged, chummer.", 'info')
+        log("....", 'info')
         log(stats, 'info')
+        log(mappingCount + notFoundCount + " sample(s) missing in total.", 'error')
 
         //if (mappingCount) log(mappingCount + " sample(s) fixed", 'success')
-        if (notFoundCount + ambigCount > 0) log((notFoundCount + ambigCount) + " sample(s) not fixed", 'error')
+        if (notFoundCount > 0) log((notFoundCount) + " sample(s) are lost (could not match sample name)", 'error')
 
-        let relatedXmls = getRelatedXmlFiles()
-        if (Object.keys(relatedXmls).length) {
-            log(" ")
-            log("Have a look at the wiz biz, chummer.", 'info')
-            log("Report by XML File: " + helpers.syntaxHighlight(relatedXmls), 'info')
-            if (mappingCount) log("Fixed sample path(s): " + helpers.syntaxHighlight(resultMapping), 'success')
-            if (notFoundCount + ambigCount > 0) log("Missing report: " + helpers.syntaxHighlight(missingReport), 'info')
-        }
+        /*
+                let relatedXmls = getRelatedXmlFiles()
+                if (Object.keys(relatedXmls).length) {
+                    log("....")
+                    log("Have a look at the wiz biz, chummer.", 'info')
+                    log("Report by XML File: " + helpers.syntaxHighlight(relatedXmls), 'info')
+                    if (mappingCount) log("Fixed sample path(s): " + helpers.syntaxHighlight(resultMapping), 'success')
+                    if (notFoundCount + ambigCount > 0) log("Missing report: " + helpers.syntaxHighlight(missingReport), 'info')
+                }
+            */
     }
 
     createReport($("#console").html())
@@ -474,23 +449,20 @@ function printResults() {
 
 function getRelatedXmlFiles() {
     let result = {}
-    let allAmbiguous = []
-    for (let p in missingReport.ambiguous) {
-        allAmbiguous.push(p)
-    }
+
     for (let folder in delugeXmls) {
         let xmlFiles = Object.keys(delugeXmls[folder])
         xmlFiles.forEach((file) => {
             let testees = delugeXmls[folder][file].sampleNames
             let intersectionNotFound = missingReport.notFound.filter(v1 => -1 !== testees.indexOf(v1))
-            let intersectionAmbiguous = allAmbiguous.filter(v2 => -1 !== testees.indexOf(v2))
+
             let intersectionFixed = resultMapping[file] ? resultMapping[file].filter(v3 => -1 !== testees.indexOf(v3)) : []
             let intersectionSkipped = skippedSamples.filter(v4 => -1 !== testees.indexOf(v4))
 
             let entry = {}
             if (intersectionFixed.length) entry.fixed = intersectionFixed
             if (intersectionNotFound.length) entry.notFound = intersectionNotFound
-            if (intersectionAmbiguous.length) entry.ambiguous = intersectionAmbiguous
+
             if (intersectionSkipped.length) entry.skipped = intersectionSkipped
 
             if (Object.keys(entry).length) {

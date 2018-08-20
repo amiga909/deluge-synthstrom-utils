@@ -6,6 +6,7 @@
  "productName": "Electron application",
  "dependencies": {
   "array-unique": "^0.3.2",
+  "audio-player-es6": "^1.0.8",
   "jquery": "^3.3.1",
   "json2xml": "^0.1.3",
   "mkdirp-sync": "0.0.3",

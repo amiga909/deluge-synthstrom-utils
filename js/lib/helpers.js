@@ -16,6 +16,9 @@ function sortAlphaNumFnc(a, b) {
     }
 }
 exports.sortAlphaNum = function sortAlphaNum(arr) {
+    if(typeof arr == 'string') {
+        arr = [arr]
+    }
     return arr.sort(sortAlphaNum);
 }
 exports.syntaxHighlight = function syntaxHighlight(obj) {

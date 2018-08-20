@@ -3,14 +3,21 @@
  */
 
 var terminal = {}
-terminal.isFixMode = false
 
 terminal.init = function(callbacks) {
+    terminal.callbacks = {}
+    terminal.interactionMode = ''
     document.addEventListener('keydown', terminal.event.keydown, false);
     //document.getElementById('console').innerHTML += '<p>Last login: ' + (new Date()).toUTCString() + ' on ttys000</p>';
     this.newLine()
-    terminal.callbacks = callbacks
+    terminal.addCallbacks(callbacks)
 };
+terminal.addCallbacks = function(cb) {
+    terminal.callbacks = Object.assign({}, terminal.callbacks, cb);
+}
+terminal.setInteractionMode = function(mode) {
+    terminal.interactionMode = mode
+}
 terminal.scrollDown = function() {
     var c = document.getElementById('console-wrapper')
     c.scrollTo(0, c.scrollHeight)
@@ -48,10 +55,14 @@ terminal.event.keydown = function(e) {
     var self = terminal;
     var char = e.key;
     var line = document.getElementsByClassName('line--active')[0];
-if(terminal.isFixMode) {
-    console.log(e.key)
-    return true
-}
+    if (terminal.interactionMode == 'confirmReplacements') {
+        if (e.key === 'ArrowUp') {
+            terminal.callbacks.onNextXml()
+        } else if (e.key === 'ArrowDown') {
+            terminal.callbacks.onPrevXml()
+        }
+
+    }
     if (e.key === 'Backspace') {
         line.innerText = line.innerText.substr(0, line.innerText.length - 1);
         return;
@@ -91,9 +102,14 @@ terminal.command.exec = function(cmd) {
     } else if (terminal.command[cmd.split(' ')[0]]) {
         var cmdArr = cmd.split(/ (.+)/, 2);
         terminal.addLine(terminal.command[cmdArr[0]](cmdArr[1].split(' ')));
+    } else if (terminal.interactionMode == 'confirmReplacements' && Number(cmd) > 0) {
+      
+            let isValid = terminal.callbacks.onSelect(cmd)
+            terminal.addLine('Sample number '+cmd+" was chosen");
+        
     } else {
         if (cmd == '') {
-            terminal.newLine();
+            terminal.addLine('<br>');
         } else {
             terminal.addLine(cmd + ": Command not found. Type 'help' for available commands.");
         }
