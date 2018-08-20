@@ -23,6 +23,11 @@
   "pack:osx": "electron-packager . DelugeFixMissingSamples --overwrite --out=release-builds --platform=darwin --arch=x64 --prune=true --icon=assets/icons/del.icns",
   "pack:w32": "electron-packager . DelugeFixMissingSamples --overwrite --out=release-builds --platform=win32 --prune=true --arch=ia32 --icon=assets/icons/del.ico",
   "pack:w64": "electron-packager . DelugeFixMissingSamples --overwrite --out=release-builds --platform=win32 --prune=true --arch=x64 --icon=assets/icons/del.ico",
-  "pack": "npm run pack:osx && npm run pack:w32 && npm run pack:w64"
+  "pack": "npm run pack:osx && npm run pack:w32 && npm run pack:w64",
+
+  "release:pack-mac": "cross-conf-env electron-packager ./dist/src npm_package_config_app --out=dist/bin --download.cache=dist/cache --platform=darwin --arch=x64 --overwrite --asar --icon=src/res/app.icns",
+  "release:pack-win": "cross-conf-env electron-packager ./dist/src npm_package_config_app --out=dist/bin --download.cache=dist/cache --platform=win32 --arch=x64 --overwrite --asar --icon=src/res/app.ico --version-string.CompanyName=\"npm_package_config_appCompanyName\" --version-string.LegalCopyright=\"npm_package_config_appLegalCopyright\" --version-string.FileDescription=\"npm_package_config_appFileDescription\" --version-string.OriginalFilename=\"npm_package_config_app.exe\" --version-string.FileVersion=\"npm_package_version\" --version-string.ProductVersion=\"npm_package_version\" --version-string.ProductName=\"npm_package_config_app\" --version-string.InternalName=\"npm_package_config_app\"",
+  "release:pack-linux": "cross-conf-env electron-packager ./dist/src npm_package_config_app --out=dist/bin --download.cache=dist/cache --platform=linux --arch=x64 --overwrite --asar",
+   
  }
 }

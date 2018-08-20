@@ -109,7 +109,6 @@ function findMissing() {
     getWriteMapping()
 console.log("writeMapping")
 
-console.log( missing  )
 
     fixInteractive()
     //fixMissing()
