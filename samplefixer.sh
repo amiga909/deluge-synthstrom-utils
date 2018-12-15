@@ -80,7 +80,7 @@ clean(){
 	for f in $(find "$WORKING_DIR" -type f -not -iname '*.wav' -and -not -iname '*.aif' -and -not -iname '*.aiff'); do
 		echo "$lB"
 		size=0
-		if [ -f "$file" ]; then
+		if [ -f "$f" ]; then
 			size=$(stat -f%z "$f")
 		fi
 		size=$(stat -f%z "$f") 
