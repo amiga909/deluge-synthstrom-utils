@@ -79,7 +79,10 @@ clean(){
 	
 	for f in $(find "$WORKING_DIR" -type f -not -iname '*.wav' -and -not -iname '*.aif' -and -not -iname '*.aiff'); do
 		echo "$lB"
-
+		size=0
+		if [ -f "$file" ]; then
+			size=$(stat -f%z "$f")
+		fi
 		size=$(stat -f%z "$f") 
 		size=$(($size / 1024))
 		displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
