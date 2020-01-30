@@ -53,8 +53,6 @@ for f in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort -h ); d
 	rm -rf "$tempDir" && mkdir -p "$tempDir"
 	echo "Processing $f ($length sec)"
 
-	#sox $f "$tempDir"/.wav trim 0 $sampleLength : newfile : restart
-	#sox "$f" "$tempDir"/.wav silence 1 0.5 1% 1 0.8 1% : newfile : restart
 	sox "$f" "$tempDir"/.wav silence 1 0.1 1% 1 0.8 1% : newfile : restart
 
 	for f in $(find "$tempDir" -type f -maxdepth 1 -iname '*.wav'  ); do
@@ -85,14 +83,6 @@ for f in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort -h ); d
 
 	rm -rf "$outputDir"
 	mv "$tempDir" "$outputDir"
-	
-
-	#sox WARN dither: dither clipped 14 samples; decrease volume?
-	#	if [[ $instrumentName =~ "bassXXXXXXX" ]];
-	#	then
-	#	    sox "$filename" "temp.wav" channels 1
-	#		mv temp.wav $filename
-	#	fi	
 
 	echo "Finished $instrumentName"
 	
@@ -102,6 +92,5 @@ for f in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort -h ); d
 done
 
 rm -rf "$tempDir"
-rm -rf "./(1)0"
 echo "-----------------------------"
 echo "done"
