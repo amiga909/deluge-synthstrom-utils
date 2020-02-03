@@ -27,18 +27,14 @@ function note_table () {
 	#deluge note names
    	octave=( c c# d d# e f f# g g# a a# h )
 	count=0
-	for count in {0..10}
-	do
-		for i in "${octave[@]}"
-		do
+	for count in {0..10}; do
+		for i in "${octave[@]}"; do
 			displOct=$((count-1))
 			NOTES+=("$i$displOct")
 		done
 	done
 }
 note_table
-
-
 
 
 for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort -h ); do
@@ -73,7 +69,7 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 		file_size=$((file_size / 1000  )) # KB
 		if [ 50 -gt "$file_size" ]; then
 			rm -f "$f"
-			#echo "Deleted $f | size $file_size KB"
+			echo "Deleted $f | size $file_size KB"
 		else 
 			sox -v 0.99 $f "temp.wav" fade 0.001 -0 0.001
 			mv temp.wav $f
@@ -100,7 +96,7 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 
 	# Mono-fy bass sounds
 	if [[ $instrumentName =~ "bass" ]]; then
-		echo "Convert $instrumentName to mono"
+		echo "Convert $instrumentName to mono (file name pattern: bass)"
 	 	for f in $(find "$tempDir" -type f -maxdepth 1 -iname '*.wav' | sort ); do
 	 		#-v 0.99: sox WARN dither
 	 	    sox -v 0.99 "$f" -c 1 "temp.wav"
@@ -119,46 +115,13 @@ done
 
 
 echo "-----------------------------"
-echo "Optimizing instrument size..."
-for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 2 -iname '*--skip12*' | sort ); do
-	instName=$(basename -- "$instrument")
-
-	if [[ $instName =~ "C0H7-96" ]]; then
-	echo "Limiting sample range for instrument $instName ..."
-	
-		if [[ $instName =~ "--skip12lower" ]]; then
-			for i in "${octave[@]}"; do
-					rm -f "$WORKING_DIR"/"$instName"/*"$i"0.wav	 
-			done
-		fi
-		if [[ $instName =~  "--skip12upper" ]]||[[ $instName =~  "--skip12lowerupper" ]]; then
-			for i in "${octave[@]}"; do
-					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
-			done
-		fi
-	else 
-		if [[ $instName =~ "--skip12lower" ]]; then
-			len=${#octave[@]}
-			for (( i=0; i<$len; i++ )); do 
-				addZero="0"
-				if [ "$i" -gt 9 ]; then
-					addZero=""
-				fi
-				rm -f "$WORKING_DIR"/"$instName"/"$addZero"0"$i".wav
-			done
-		fi
-	fi
-done
-
-# remove every 2nd note from every instrument over 50MB
-
-
-
-
-echo "-----------------------------"
 echo "done"
 folderSize="$(du -ch ./*/*.wav |  grep total | cut -f1 | sed -e 's/ //g')"
 echo "All instruments size: $folderSize"
 rm -rf "$tempDir"
 rm -f "temp.wav"
+
+sh multisample-optimizesize.sh
+
+
 
