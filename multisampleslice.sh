@@ -15,12 +15,15 @@ fi
 #fi
 
 # globals
-NO_OF_NOTES=96
-START_NOTE=12
 WORKING_DIR="."
 cd $WORKING_DIR
-tempDir="$WORKING_DIR/temp"
-rm -rf "temp.wav" && rm -rf "$tempDir"
+NO_OF_NOTES=96
+START_NOTE=12
+MIN_CHUNK_FILE_SIZE_KB=30
+TEMP_DIR="$WORKING_DIR/temp"
+TEMP_WAV="temp.wav"
+TEMP_WAV1="temp1.wav"
+rm -rf "$TEMP_WAV" && rm -rf "$TEMP_DIR"
 
 NOTES=( )
 function note_table () {
@@ -38,8 +41,8 @@ note_table
 
 
 for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort -h ); do
-	rm -rf "$tempDir" && mkdir -p "$tempDir" 
-	rm -f "temp.wav" && rm -f "temp1.wav"
+	rm -rf "$TEMP_DIR" && mkdir -p "$TEMP_DIR" 
+	rm -f "$TEMP_WAV" && rm -f "$TEMP_WAV1"
 
 	echo "-----------------------------"
 	file_size=$(stat -f%z "$recording")
@@ -55,59 +58,59 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 	outputDir="$WORKING_DIR/$instrumentName"
 	
 	echo "Levelling $recording ($file_size MB)..."
-	sox -v 0.75 $recording "temp.wav" compand .01,.3 -6,-4,-3,-3,0,-3 
-	sox --norm="-0.15" "temp.wav" "temp1.wav" 
-	mv temp1.wav temp.wav
+	sox -v 0.75 $recording "$TEMP_WAV" compand .01,.3 -6,-4,-3,-3,0,-3 
+	sox --norm="-0.15" "$TEMP_WAV" "$TEMP_WAV1" 
+	mv $TEMP_WAV1 $TEMP_WAV
 
 	echo "Splitting ..."
-	sox "temp.wav" "$tempDir"/.wav silence 1 0.1 1% 1 0.8 1% : newfile : restart
+	sox "$TEMP_WAV" "$TEMP_DIR"/.wav silence 1 0.1 1% 1 0.8 1% : newfile : restart
 
 	# Remove faulty files and normalize audio
-	for f in $(find "$tempDir" -type f -maxdepth 1 -iname '*.wav' | sort ); do
+	for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
 		file_size=$(stat -f%z "$f")
 		file_size=$((file_size + 0 ))
 		file_size=$((file_size / 1000  )) # KB
-		if [ 50 -gt "$file_size" ]; then
+		if [ "$MIN_CHUNK_FILE_SIZE_KB" -gt "$file_size" ]; then
 			rm -f "$f"
 			echo "Deleted $f | size $file_size KB"
 		else 
-			sox -v 0.99 $f "temp.wav" fade 0.001 -0 0.001
-			mv temp.wav $f
+			sox -v 0.99 $f "$TEMP_WAV" fade 0.001 -0 0.001
+			mv $TEMP_WAV $f
 		fi
 	done
 
 
 	# Name wav files if sample count is correct
-	tempDirCount="$(ls -1q "$tempDir" | wc -l)" 
+	tempDirCount="$(ls -1q "$TEMP_DIR" | wc -l)" 
 	tempDirCount=$((tempDirCount + 0))
 	if [ "$tempDirCount" == "$NO_OF_NOTES" ]; then
 		outputDir="$outputDir-C0H7-$NO_OF_NOTES"
 		cnt=$((START_NOTE))
-		for f in $(find "$tempDir" -type f -maxdepth 1 -iname '*.wav' | sort ); do
+		for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
 			displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
-		 	mv $f "$tempDir/$cnt.${NOTES[$cnt]}.wav"	
+		 	mv $f "$TEMP_DIR/$cnt.${NOTES[$cnt]}.wav"	
 		 	cnt=$((cnt + 1))	
 		done
 
 	else 
 		echo "!Error sample count. Expected: $NO_OF_NOTES Have: $tempDirCount"
-		outputDir="$outputDir-$tempDirCount"
+		outputDir="$outputDir-$TEMP_DIRCount"
 	fi
 
 	# Mono-fy bass sounds
 	if [[ $instrumentName =~ "bass" ]]; then
 		echo "Convert $instrumentName to mono (file name pattern: bass)"
-	 	for f in $(find "$tempDir" -type f -maxdepth 1 -iname '*.wav' | sort ); do
+	 	for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
 	 		#-v 0.99: sox WARN dither
-	 	    sox -v 0.99 "$f" -c 1 "temp.wav"
-	 		mv temp.wav $f
+	 	    sox -v 0.99 "$f" -c 1 "$TEMP_WAV"
+	 		mv $TEMP_WAV $f
 	 	done
 	fi	
-	folderSize="$(du -hs $tempDir | cut -f1 | sed -e 's/ //g')"
-	outputDir="$outputDir--$folderSize"
+	folderSize="$(du -hs $TEMP_DIR | cut -f1 | sed -e 's/ //g')"
+	outputDir="$outputDir-$folderSize"
 
 	rm -rf "$outputDir"
-	mv "$tempDir" "$outputDir"
+	mv "$TEMP_DIR" "$outputDir"
 		
 	echo "Finished $instrumentName"
 done
@@ -118,8 +121,8 @@ echo "-----------------------------"
 echo "done"
 folderSize="$(du -ch ./*/*.wav |  grep total | cut -f1 | sed -e 's/ //g')"
 echo "All instruments size: $folderSize"
-rm -rf "$tempDir"
-rm -f "temp.wav"
+rm -rf "$TEMP_DIR"
+rm -f "$TEMP_WAV"
 
 sh multisample-optimizesize.sh
 
