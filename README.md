@@ -10,11 +10,10 @@
 - A backup folder is created for overwritten files: _MISSING_SAMPLES_FIXER_ARCHIVE
 - Supported audio file extensions: .wav, .aif, .aiff
 - Samples with a '~' in their name are skipped: http://forums.synthstrom.com/discussion/1234/strange-sample-names-in-xml-files
-### Download App
-- Soon. Have to find a file host, Electron apps are easily over the Github limit.  
+  
 ### Run as NPM app
 - Clone this repository
-- cd js
+- cd missingsamplefixer
 - npm install
 - electron .
 ### Build app
