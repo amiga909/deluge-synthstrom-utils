@@ -1,9 +1,0 @@
-alias rsyncSamples='rsync -av --delete source target'
-
-dot_clean -n . 
-
-
-
-electron-packager . --overwrite --platform=darwin --arch=x64 --prune=true --out=release-builds
-
-electron .
