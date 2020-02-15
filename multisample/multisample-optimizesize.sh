@@ -4,7 +4,7 @@
 ## Helper
 ##
 WORKING_DIR="."
-MAX_INSTRUMENT_SIZE_MB=50
+MAX_INSTRUMENT_SIZE_MB=80
 tokenSkipLowerUpper="--skip12lowerupper"
 tokenSkipUpper="--skip12upper"
 tokenSkipLower="--skip12lower"
@@ -15,13 +15,14 @@ echo "Optimizing instrument size..."
 folderSizeBefore="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
 
 # 1) Cut bad recordings (sometimes lowest and hightes octaves sound very bad)
-for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip12*' | sort ); do
+for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip*' | sort ); do
 	instName=$(basename -- "$instrument")
 	instNameRaw="${instName/-*/}"
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g')"
 
 	echo "-----------------------------"
 	echo "Processing $instNameRaw ($instName) $folderSize"
+
 
 	# limit note range, remove noisy/bad parts (too low, boring upper, ..)
 	if [[ $instName =~ "C0H7-96" ]]; then
@@ -39,6 +40,32 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip12*'
 			for i in "${octave[@]}"; do
 					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
 			done
+		elif [[ $instName =~  "--skip24upper" ]]; then
+			for i in "${octave[@]}"; do
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+			done
+		elif [[ $instName =~  "--skip36upper" ]]; then
+			for i in "${octave[@]}"; do
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
+			done
+		elif [[ $instName =~  "--skip48upper" ]]; then
+			for i in "${octave[@]}"; do
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"4.wav
+			done
+		elif [[ $instName =~  "--skip60upper" ]]; then
+			for i in "${octave[@]}"; do
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"4.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"3.wav
+			done
 		fi
 
 	else 
@@ -52,26 +79,22 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip12*'
 done
 
 
+
 # 2) Remove every 2nd sample until size limit met
 for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
-	
-	instName=$(basename -- "$instrument")
-	instNameRaw="${instName/-*/}"
-
 	if [ $instrument = './' ]; then
-	        # Will not run if no directories are available
 	        continue
 	fi  
+	instName=$(basename -- "$instrument")
+	instNameRaw="${instName/-*/}"
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g')"
 	# remove float, cast to int
 	folderSize="${folderSize/.*/}"
 	folderSize=$((folderSize + 0))
-	if [ "$MAX_INSTRUMENT_SIZE_MB" -gt  "$folderSize" ]; then
-		continue
-	fi
 	removeCounter=0
 	while [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" && "10" -gt "$removeCounter" ]]; do
 		removeCounter=$((removeCounter + 1))
+		echo "$instNameRaw -- Removing odd numbered samples"
 		wavCount=0
 		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -h ); do
 			remainder=$(( wavCount % 2 ))

@@ -2,7 +2,7 @@
 
 ## Convert DAW multisample recordings to Deluge multisamples
 ##
-##
+## https://github.com/rochars/wavefile/blob/master/lib/wavefile-tag-editor.js
 
 
 if ! [ -x "$(command -v sox)" ]; then
@@ -74,8 +74,8 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 			rm -f "$f"
 			echo "Deleted $f | size $file_size KB"
 		else 
-			sox -v 0.99 $f "$TEMP_WAV" fade 0.001 -0 0.001
-			mv $TEMP_WAV $f
+			sox "$f" "$TEMP_WAV" contrast 0
+			sox -v 0.99 "$TEMP_WAV" "$f" fade 0.001 -0 0.001
 		fi
 	done
 
@@ -124,7 +124,7 @@ echo "All instruments size: $folderSize"
 rm -rf "$TEMP_DIR"
 rm -f "$TEMP_WAV"
 
-sh multisample-optimizesize.sh
+#sh multisample-optimizesize.sh
 
 
 
