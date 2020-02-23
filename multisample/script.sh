@@ -4,5 +4,5 @@
 ## 
 
 sh slice.sh
-sh optimizesize.sh
-sh xmlgenerate.sh 
+sh optimize.sh
+sh xml.sh 
