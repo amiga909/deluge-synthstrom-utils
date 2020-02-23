@@ -10,7 +10,7 @@ if ! [ -x "$(command -v soxi)" ]; then
 fi
 
 
-WORKING_DIR="_temp/"
+WORKING_DIR="./"
 DELUGE_SAMPLES_ROOT="SAMPLES/amiga909.multisamples/zeeon-beepstreet"
 octave=( c c# d d# e f f# g g# a a# h )
 
@@ -153,7 +153,6 @@ for instrument in $(find "$WORKING_DIR/" -type d -mindepth 1 -maxdepth 1 | sort 
 			#echo "$wav has an invalid format"
 			hasValidFilenames=false
 		fi
-
 	done
 
 
@@ -161,7 +160,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -mindepth 1 -maxdepth 1 | sort 
 		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -V ); do
 			name=$(basename "$wav")
 			rangeTopNote=0
-			fileName="$DELUGE_SAMPLES_ROOT/$name"
+			fileName="$DELUGE_SAMPLES_ROOT/$instName/$name"
 			transpose=0
 			startSamplePos=0
 			endSamplePos="$(soxi -s $wav)"
@@ -181,8 +180,10 @@ $sampleRangesStr <sampleRange
 </sampleRange>
 EOF)
 		done
-		echo "$templateUpper $sampleRangesStr $templateLower" > "a909.$instNameRaw.XML" 
+		echo "$templateUpper $sampleRangesStr $templateLower" > "a9.$instNameRaw.XML" 
 		echo "$instNameRaw: a909.$instNameRaw.XML created"
+	else 
+		echo "-- $instNameRaw: no XML generated, invalid filenames."
 	fi
 	
 	

@@ -83,19 +83,16 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 	# Name wav files if sample count is correct
 	tempDirCount="$(ls -1q "$TEMP_DIR" | wc -l)" 
 	tempDirCount=$((tempDirCount + 0))
-	if [ "$tempDirCount" == "$NO_OF_NOTES" ]; then
-		outputDir="$outputDir-C0H7-$NO_OF_NOTES"
-		cnt=$((START_NOTE))
-		for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
-			displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
-		 	mv $f "$TEMP_DIR/$cnt.${NOTES[$cnt]}.wav"	
-		 	cnt=$((cnt + 1))	
-		done
-
-	else 
+	if ! [ "$tempDirCount" == "$NO_OF_NOTES" ]; then
 		echo "!Error sample count. Expected: $NO_OF_NOTES Have: $tempDirCount"
-		outputDir="$outputDir-$TEMP_DIRCount"
 	fi
+	outputDir="$outputDir-C0-$NO_OF_NOTES"
+	cnt=$((START_NOTE))
+	for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
+		displayPath="$(echo "$f" | sed -E 's/\.\/\///g')"
+		mv $f "$TEMP_DIR/$cnt.${NOTES[$cnt]}.wav"	
+		cnt=$((cnt + 1))	
+	done
 
 	# Mono-fy bass sounds
 	if [[ $instrumentName =~ "bass" ]]; then

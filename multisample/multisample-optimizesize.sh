@@ -87,7 +87,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	fi  
 	instName=$(basename -- "$instrument")
 	instNameRaw="${instName/-*/}"
-	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g')"
+	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
 	# remove float, cast to int
 	folderSize="${folderSize/.*/}"
 	folderSize=$((folderSize + 0))
@@ -103,7 +103,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 			fi 
 			wavCount=$((wavCount + 1))
 		done
-		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g')"
+		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
 		folderSize="${folderSize/.*/}"
 		folderSize=$((folderSize + 0))
 	done
