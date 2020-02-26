@@ -62,8 +62,16 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 	sox --norm="-0.15" "$TEMP_WAV" "$TEMP_WAV1" 
 	mv $TEMP_WAV1 $TEMP_WAV
 
+	sliceThreshold=1
+	if [[ $instrumentName =~ "--threshold" ]]; then
+		#INT must be at end of filename
+		token="${instrumentName/*--threshold/}"
+		sliceThreshold=$((token + 0))
+	fi 
+
 	echo "Splitting ..."
-	sox "$TEMP_WAV" "$TEMP_DIR"/.wav silence 1 0.1 1% 1 0.8 1% : newfile : restart
+	sox "$TEMP_WAV" "$TEMP_DIR"/.wav silence 1 0.1 "$sliceThreshold"% 1 0.8 "$sliceThreshold"% : newfile : restart
+	
 
 	# Remove faulty files and normalize audio
 	for f in $(find "$TEMP_DIR" -type f -maxdepth 1 -iname '*.wav' | sort ); do
@@ -75,7 +83,7 @@ for recording in $(find "$WORKING_DIR" -type f -maxdepth 1 -iname '*.wav' | sort
 			echo "Deleted $f | size $file_size KB"
 		else 
 			sox "$f" "$TEMP_WAV" contrast 0
-			sox -v 0.99 "$TEMP_WAV" "$f" fade 0.001 -0 0.001
+			sox -v 0.99 "$TEMP_WAV" "$f" fade 0.01 -0 0.01
 		fi
 	done
 
