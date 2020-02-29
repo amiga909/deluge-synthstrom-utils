@@ -1,18 +1,32 @@
 #! /bin/sh
 
 ## Create Deluge multisample XML preset file from folder of samples with named wavs
-## 
-##
+## Params
+## 1 = Root folder where samples are stored on the SD Card
 
 if ! [ -x "$(command -v soxi)" ]; then
 		echo 'Error: soxi (sox.sourceforge.net) is not installed.'  
 	  	exit 1
 fi
 
+if [ -z "$1" ]; then
+	DELUGE_SAMPLES_ROOT="$1"  
+else 
+	DELUGE_SAMPLES_ROOT="SAMPLES/3thparty/amiga909.multisamples/zeeon-beepstreet"
+fi
+
 
 WORKING_DIR="./"
-DELUGE_SAMPLES_ROOT="SAMPLES/amiga909.multisamples/zeeon-beepstreet"
-octave=( c c# d d# e f f# g g# a a# h )
+DELUGE_PRESET_NAMESPACE="a9"
+RELEASE_TIME=5
+BASS_RELEASE_TIME=3
+BASS_SHORT_RELEASE_TIME=1
+LEAD_RELEASE_TIME=10
+PAD_RELEASE_TIME=20
+FX_RELEASE_TIME=15
+
+# map Deluge 0-50
+paramVals=(0x80000000 0x851EB851 0x8A3D70A2 0x8F5C28F3 0x947AE144 0x99999995 0x9EB851E6 0xA3D70A37 0xA8F5C288 0xAE147AD9 0xB333332A 0xB851EB7B 0xBD70A3CC 0xC28F5C1D 0xC7AE146E 0xCCCCCCBF 0xD1EB8510 0xD70A3D61 0xDC28F5B2 0xE147AE03 0xE6666654 0xEB851EA5 0xF0A3D6F6 0xF5C28F47 0xFAE14798 0x00000000 0x051EB83A 0x0A3D708B 0x0F5C28DC 0x147AE12D 0x1999997E 0x1EB851CF 0x23D70A20 0x28F5C271 0x2E147AC2 0x33333313 0x3851EB64 0x3D70A3B5 0x428F5C06 0x47AE1457 0x4CCCCCA8 0x51EB84F9 0x570A3D4A 0x5C28F59B 0x6147ADEC 0x6666663D 0x6B851E8E 0x70A3D6DF 0x75C28F30 0x7AE14781 0x7FFFFFD2)
 
 templateUpper=$(cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -78,7 +92,7 @@ templateLower=$(cat <<EOF
 		modFXDepth="0xAE147AD9"
 		delayRate="0xF0000000"
 		delayFeedback="0x80000000"
-		reverbAmount="0x0E000000"
+		reverbAmount="0x00000000"
 		arpeggiatorRate="0x00000000"
 		stutterRate="0x00000000"
 		sampleRateReduction="0x80000000"
@@ -89,7 +103,7 @@ templateLower=$(cat <<EOF
 			attack="0x80000000"
 			decay="0xE6666654"
 			sustain="0x7FFFFFFF"
-			release="0x8C000000" />
+			release="RELEASE_TIME" />
 		<envelope2
 			attack="0xE6666654"
 			decay="0xE6666654"
@@ -136,7 +150,7 @@ templateLower=$(cat <<EOF
 </sound>
 
 EOF)
- 
+
 echo "-----------------------------"
 
 # 1) Cut bad recordings (sometimes lowest and hightes octaves sound very bad)
@@ -180,26 +194,25 @@ $sampleRangesStr <sampleRange
 </sampleRange>
 EOF)
 		done
-		echo "$templateUpper $sampleRangesStr $templateLower" > "a9.$instNameRaw.XML" 
-		echo "$instNameRaw: a909.$instNameRaw.XML created"
+		# apply params
+		if [[ $instNameRaw =~ ".b." ]]; then
+			RELEASE_TIME="$BASS_RELEASE_TIME"
+		elif [[ $instNameRaw =~ ".bs." ]]; then
+			RELEASE_TIME="$BASS_SHORT_RELEASE_TIME"
+		elif [[ $instNameRaw =~ ".l." ]]; then
+			RELEASE_TIME="$LEAD_RELEASE_TIME"
+		elif [[ $instNameRaw =~ ".p." ]]; then
+			RELEASE_TIME="$PAD_RELEASE_TIME"
+		elif [[ $instNameRaw =~ ".x." ]]; then
+			RELEASE_TIME="$FX_RELEASE_TIME"
+		fi	
+		RELEASE_TIME="${paramVals[$RELEASE_TIME]}"
+		templateLower="${templateLower/RELEASE_TIME/$RELEASE_TIME}"
+
+		echo "$templateUpper $sampleRangesStr $templateLower" > "$DELUGE_PRESET_NAMESPACE.$instNameRaw.XML" 
 	else 
-		echo "-- $instNameRaw: no XML generated, invalid filenames."
+		echo "folder $instNameRaw: no XML generated, invalid files"
 	fi
 	
 	
 done
-
-
-
-#(note rangeTop transpose (no))
-#samplerobot
-#c0   24 36  (12)
-#c1   37 24  (24)
-#d#1  40 21  (27)
-#c2   49 12  (36)
-#a2   58 3   (45)
-#c3   61 NONE (48)
-#d#3  64 -3  (51)
-#f#3  67 -6  (54)
-#a5   94 -33 (81)
-#c6   L  -36 (84)

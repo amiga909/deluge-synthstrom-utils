@@ -4,7 +4,7 @@
 ## Helper
 ##
 WORKING_DIR="."
-MAX_INSTRUMENT_SIZE_MB=80
+MAX_INSTRUMENT_SIZE_MB=40
 tokenSkipLowerUpper="--skip12lowerupper"
 tokenSkipUpper="--skip12upper"
 tokenSkipLower="--skip12lower"
@@ -111,7 +111,10 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g')"
 	fileCount="$(ls -1q "$instrument" | wc -l | sed -e 's/ //g')" 
 	outputDir="$instNameRaw-$fileCount--$folderSize"
-	mv $instrument $outputDir
+	if [ ! -d "$outputDir" ]; then
+  		mv -f "$instrument" "$outputDir"
+	fi
+	
 done
 
 folderSize="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
