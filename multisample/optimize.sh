@@ -26,8 +26,9 @@ octave=( c c# d d# e f f# g g# a a# h )
 ## [1] = Root folder where samples are stored on the SD Card
  
 echo "-----------------------------"
-folderSizeBefore="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
-echo "Optimizing instrument size... (size before: $folderSizeBefore)"
+folderSizeBefore="$(find . -maxdepth 2 -mindepth 2  -name "*.wav" -exec du -ks {} \; | awk '{ total = total + $1 } END { print total }')" 
+folderSizeBefore=$(( folderSizeBefore / 1000 ))
+echo "Optimizing instrument size... (size before: $folderSizeBefore MB)"
 
 # 1) Cut bad recordings (sometimes lowest and hightes octaves sound very bad)
 for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip*' | sort ); do
@@ -109,22 +110,6 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	folderSize="${folderSize/.*/}"
 	folderSize=$((folderSize + 0))
 
-	# shake off upper notes first, keep C and F 
-	for count in {7..5}; do 
-		if [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" ]]; then
-			i=0
-			echo "remove octabe $count"
-			for i in "${octave[@]}"; do
-				if [[ $i != "c" && $i != "f" ]]; then
-					rm -f "$WORKING_DIR"/"$instName"/*"$i$count".wav
-				fi
-			done
-		fi 
-		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
-		folderSize="${folderSize/.*/}"
-		folderSize=$((folderSize + 0))
-    done
-
 	# remove every second note in every octave until max size reached
 	removeCounter=0
 	while [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" && "10" -gt "$removeCounter" ]]; do
@@ -138,6 +123,25 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 			fi 
 			wavCount=$((wavCount + 1))
 		done
+
+		# shake off very high octave notes first, usually not a sweet spot, keep C and F 
+		i=0
+		for i in "${octave[@]}"; do
+			if [[ $i = "c"|| $i = "f" ]]; then
+				continue
+			fi
+			if [[ "$removeCounter" = 1 ]]; then
+				echo "$instNameRaw -- remove octave 7"
+				rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+			elif [[ "$removeCounter" = 2 ]]; then
+				echo "$instNameRaw -- remove octave 6"
+				rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+			elif [[ "$removeCounter" = 3 ]]; then
+				echo "$instNameRaw -- remove octave 5"
+				rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
+			fi
+		done
+		
 		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
 		folderSize="${folderSize/.*/}"
 		folderSize=$((folderSize + 0))
@@ -147,10 +151,13 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	fileCount="$(ls -1q "$instrument" | wc -l | sed -e 's/ //g')" 
 	outputDir="$instNameRaw-$fileCount--$folderSize"
 	if [ ! -d "$outputDir" ]; then
+		echo "processed new $instNameRaw"
   		mv -f "$instrument" "$outputDir"
 	fi
 	
 done
 
-folderSize="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
+
+folderSize="$(find . -maxdepth 2 -mindepth 2  -name "*.wav" -exec du -ks {} \; | awk '{ total = total + $1 } END { print total }')" 
+folderSize=$(( folderSize / 1000 ))
 echo "All instruments size after: $folderSize"

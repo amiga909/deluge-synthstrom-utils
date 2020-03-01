@@ -18,7 +18,7 @@ fi
 WORKING_DIR="./"
 DELUGE_PRESET_NAMESPACE="aa9"
 ## release time: 0-50
-RELEASE_TIME="0xCC000000"
+RELEASE_TIME="0x9A000000"
 BASS_RELEASE_TIME=3
 BASS_SHORT_RELEASE_TIME=1
 LEAD_RELEASE_TIME=10
@@ -219,6 +219,7 @@ EOF)
 			#RELEASE_TIME="$FX_RELEASE_TIME"
 		fi	
 		#RELEASE_TIME="${paramVals[$RELEASE_TIME]}"
+		echo "$RELEASE_TIME"
 		templateLower="${templateLower/__RELEASE_TIME/$RELEASE_TIME}"
 		delugePresetName="$DELUGE_PRESET_NAMESPACE.$instNameRaw.XML"
 		echo "$templateUpper $sampleRangesStr $templateLower" > "$delugePresetName"

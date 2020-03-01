@@ -124,6 +124,8 @@ done
 
 echo "-----------------------------"
 echo "done"
+# du argument list too long
+#folderSize="$(find . -maxdepth 2 -mindepth 2  -name "*.wav" -exec du -ks {} \; | awk '{ total = total + $1 } END { print total }')" 
 folderSize="$(du -ch ./*/*.wav |  grep total | cut -f1 | sed -e 's/ //g')"
 echo "All instruments size: $folderSize"
 rm -rf "$TEMP_DIR"
