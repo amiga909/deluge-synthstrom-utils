@@ -2,20 +2,38 @@
 
 ## Convert DAW multisample recordings to Deluge multisamples
 ## Helper
-##
+## [PARAMS]
+ # [1] = Integer; MAX_INSTRUMENT_SIZE_MB; Max allowed instrument size
+
+
+MAX_INSTRUMENT_SIZE_MB=0
+if [ ! -z "$1" ]; then
+	MAX_INSTRUMENT_SIZE_MB="$1"  
+	MAX_INSTRUMENT_SIZE_MB=$((MAX_INSTRUMENT_SIZE_MB + 0))
+fi
+
+if [ $MAX_INSTRUMENT_SIZE_MB = 0 ]; then
+	MAX_INSTRUMENT_SIZE_MB=1000
+fi
+
 WORKING_DIR="."
-MAX_INSTRUMENT_SIZE_MB=40
 tokenSkipLowerUpper="--skip12lowerupper"
 tokenSkipUpper="--skip12upper"
 tokenSkipLower="--skip12lower"
 octave=( c c# d d# e f f# g g# a a# h )
+
+## [PARAMS]
+## [1] = Root folder where samples are stored on the SD Card
  
 echo "-----------------------------"
-echo "Optimizing instrument size..."
 folderSizeBefore="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
+echo "Optimizing instrument size... (size before: $folderSizeBefore)"
 
 # 1) Cut bad recordings (sometimes lowest and hightes octaves sound very bad)
 for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip*' | sort ); do
+	if [ $instrument = './' ]; then
+		continue
+	fi 
 	instName=$(basename -- "$instrument")
 	instNameRaw="${instName/-*/}"
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g')"
@@ -31,7 +49,6 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip*' |
 					rm -f "$WORKING_DIR"/"$instName"/*"$i"0.wav	 
 					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
 			done
-			
 		elif [[ $instName =~  $tokenSkipLower ]]; then
 			for i in "${octave[@]}"; do
 					rm -f "$WORKING_DIR"/"$instName"/*"$i"0.wav
@@ -83,7 +100,7 @@ done
 # 2) Remove every 2nd sample until size limit met
 for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	if [ $instrument = './' ]; then
-	        continue
+		continue
 	fi  
 	instName=$(basename -- "$instrument")
 	instNameRaw="${instName/-*/}"
@@ -91,6 +108,24 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	# remove float, cast to int
 	folderSize="${folderSize/.*/}"
 	folderSize=$((folderSize + 0))
+
+	# shake off upper notes first, keep C and F 
+	for count in {7..5}; do 
+		if [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" ]]; then
+			i=0
+			echo "remove octabe $count"
+			for i in "${octave[@]}"; do
+				if [[ $i != "c" && $i != "f" ]]; then
+					rm -f "$WORKING_DIR"/"$instName"/*"$i$count".wav
+				fi
+			done
+		fi 
+		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
+		folderSize="${folderSize/.*/}"
+		folderSize=$((folderSize + 0))
+    done
+
+	# remove every second note in every octave until max size reached
 	removeCounter=0
 	while [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" && "10" -gt "$removeCounter" ]]; do
 		removeCounter=$((removeCounter + 1))
@@ -118,4 +153,4 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 done
 
 folderSize="$(du -ch ./*/*.wav | grep total | cut -f1 | sed -e 's/ //g')"
-echo "All instruments size after: $folderSize | before: $folderSizeBefore"
+echo "All instruments size after: $folderSize"

@@ -9,23 +9,30 @@ if ! [ -x "$(command -v soxi)" ]; then
 	  	exit 1
 fi
 
-if [ -z "$1" ]; then
+if [ ! -z "$1" ]; then
 	DELUGE_SAMPLES_ROOT="$1"  
 else 
 	DELUGE_SAMPLES_ROOT="SAMPLES/3thparty/amiga909.multisamples/zeeon-beepstreet"
 fi
 
-
 WORKING_DIR="./"
-DELUGE_PRESET_NAMESPACE="a9"
-RELEASE_TIME=5
+DELUGE_PRESET_NAMESPACE="aa9"
+## release time: 0-50
+RELEASE_TIME="0xCC000000"
 BASS_RELEASE_TIME=3
 BASS_SHORT_RELEASE_TIME=1
 LEAD_RELEASE_TIME=10
 PAD_RELEASE_TIME=20
 FX_RELEASE_TIME=15
+DELUGE_VALUE_0="0x80000000"
+DELUGE_VALUE_25="0x00000000"
+DELUGE_VALUE_50="0x7FFFFFFF"
+RELEASE_TIME_VERY_SHORT="0xB0000000"
+RELEASE_TIME_SHORT="0xCC000000"
+RELEASE_TIME_MEDIUM="0x04000000"
 
-# map Deluge 0-50
+
+# map Deluge 0-50, fixh format, https://docs.google.com/document/d/11DUuuE1LBYOVlluPA9McT1_dT4AofZ5jnUD5eHvj7Vs/edit
 paramVals=(0x80000000 0x851EB851 0x8A3D70A2 0x8F5C28F3 0x947AE144 0x99999995 0x9EB851E6 0xA3D70A37 0xA8F5C288 0xAE147AD9 0xB333332A 0xB851EB7B 0xBD70A3CC 0xC28F5C1D 0xC7AE146E 0xCCCCCCBF 0xD1EB8510 0xD70A3D61 0xDC28F5B2 0xE147AE03 0xE6666654 0xEB851EA5 0xF0A3D6F6 0xF5C28F47 0xFAE14798 0x00000000 0x051EB83A 0x0A3D708B 0x0F5C28DC 0x147AE12D 0x1999997E 0x1EB851CF 0x23D70A20 0x28F5C271 0x2E147AC2 0x33333313 0x3851EB64 0x3D70A3B5 0x428F5C06 0x47AE1457 0x4CCCCCA8 0x51EB84F9 0x570A3D4A 0x5C28F59B 0x6147ADEC 0x6666663D 0x6B851E8E 0x70A3D6DF 0x75C28F30 0x7AE14781 0x7FFFFFD2)
 
 templateUpper=$(cat <<EOF
@@ -92,7 +99,7 @@ templateLower=$(cat <<EOF
 		modFXDepth="0xAE147AD9"
 		delayRate="0xF0000000"
 		delayFeedback="0x80000000"
-		reverbAmount="0x00000000"
+		reverbAmount="0x80000000"
 		arpeggiatorRate="0x00000000"
 		stutterRate="0x00000000"
 		sampleRateReduction="0x80000000"
@@ -103,12 +110,12 @@ templateLower=$(cat <<EOF
 			attack="0x80000000"
 			decay="0xE6666654"
 			sustain="0x7FFFFFFF"
-			release="RELEASE_TIME" />
+			release="0xE666665" />
 		<envelope2
 			attack="0xE6666654"
 			decay="0xE6666654"
 			sustain="0xFFFFFFE9"
-			release="0xE6666654" />
+			release="__RELEASE_TIME" />
 		<patchCables>
 			<patchCable
 				source="velocity"
@@ -196,23 +203,28 @@ EOF)
 		done
 		# apply params
 		if [[ $instNameRaw =~ ".b." ]]; then
-			RELEASE_TIME="$BASS_RELEASE_TIME"
+			#RELEASE_TIME="$BASS_RELEASE_TIME"
+			RELEASE_TIME="$RELEASE_TIME_VERY_SHORT"
 		elif [[ $instNameRaw =~ ".bs." ]]; then
-			RELEASE_TIME="$BASS_SHORT_RELEASE_TIME"
+			RELEASE_TIME="$RELEASE_TIME_VERY_SHORT"
+			#RELEASE_TIME="$BASS_SHORT_RELEASE_TIME"
 		elif [[ $instNameRaw =~ ".l." ]]; then
-			RELEASE_TIME="$LEAD_RELEASE_TIME"
+			RELEASE_TIME="$RELEASE_TIME_SHORT"
+			#RELEASE_TIME="$LEAD_RELEASE_TIME"
 		elif [[ $instNameRaw =~ ".p." ]]; then
-			RELEASE_TIME="$PAD_RELEASE_TIME"
+			RELEASE_TIME="$RELEASE_TIME_MEDIUM"
+			#RELEASE_TIME="$PAD_RELEASE_TIME"
 		elif [[ $instNameRaw =~ ".x." ]]; then
-			RELEASE_TIME="$FX_RELEASE_TIME"
+			RELEASE_TIME="$RELEASE_TIME_MEDIUM"
+			#RELEASE_TIME="$FX_RELEASE_TIME"
 		fi	
-		RELEASE_TIME="${paramVals[$RELEASE_TIME]}"
-		templateLower="${templateLower/RELEASE_TIME/$RELEASE_TIME}"
-
-		echo "$templateUpper $sampleRangesStr $templateLower" > "$DELUGE_PRESET_NAMESPACE.$instNameRaw.XML" 
+		#RELEASE_TIME="${paramVals[$RELEASE_TIME]}"
+		templateLower="${templateLower/__RELEASE_TIME/$RELEASE_TIME}"
+		delugePresetName="$DELUGE_PRESET_NAMESPACE.$instNameRaw.XML"
+		echo "$templateUpper $sampleRangesStr $templateLower" > "$delugePresetName"
+		echo "Created $delugePresetName for folder $instNameRaw" 
 	else 
 		echo "folder $instNameRaw: no XML generated, invalid files"
 	fi
-	
 	
 done
