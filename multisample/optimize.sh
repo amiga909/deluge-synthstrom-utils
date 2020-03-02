@@ -160,4 +160,4 @@ done
 
 folderSize="$(find . -maxdepth 2 -mindepth 2  -name "*.wav" -exec du -ks {} \; | awk '{ total = total + $1 } END { print total }')" 
 folderSize=$(( folderSize / 1000 ))
-echo "All instruments size after: $folderSize"
+echo "All instruments size after: $folderSize MB  (size before: $folderSizeBefore MB)"
