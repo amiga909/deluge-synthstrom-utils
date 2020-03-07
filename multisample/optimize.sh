@@ -114,7 +114,6 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	removeCounter=0
 	while [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" && "10" -gt "$removeCounter" ]]; do
 		removeCounter=$((removeCounter + 1))
-		echo "$instNameRaw -- Removing odd numbered samples"
 		wavCount=0
 		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -h ); do
 			remainder=$(( wavCount % 2 ))
@@ -123,35 +122,41 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 			fi 
 			wavCount=$((wavCount + 1))
 		done
+		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
+		folderSize="${folderSize/.*/}"
+		folderSize=$((folderSize + 0))
 
-		# shake off very high octave notes first, usually not a sweet spot, keep C and F 
-		i=0
-		for i in "${octave[@]}"; do
-			if [[ $i = "c"|| $i = "f" ]]; then
-				continue
-			fi
-			if [[ "$removeCounter" = 1 ]]; then
-				echo "$instNameRaw -- remove octave 7"
-				rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
-			elif [[ "$removeCounter" = 2 ]]; then
-				echo "$instNameRaw -- remove octave 6"
-				rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
-			elif [[ "$removeCounter" = 3 ]]; then
-				echo "$instNameRaw -- remove octave 5"
-				rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
-			fi
-		done
+
+		if [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" ]]; then
+			# shake off very high octave notes first, usually not a sweet spot
+			i=0
+			for i in "${octave[@]}"; do
+				if [[ "$removeCounter" = 1 ]]; then
+					#echo "$instNameRaw -- remove octave 7+"
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"9.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"8.wav
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"7.wav
+				elif [[ "$removeCounter" = 2 ]]; then
+					#echo "$instNameRaw -- remove octave 6"
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"6.wav
+				elif [[ "$removeCounter" = 3 ]]; then
+					#echo "$instNameRaw -- remove octave 5"
+					rm -f "$WORKING_DIR"/"$instName"/*"$i"5.wav
+				fi
+			done
+	    fi
 		
 		folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
 		folderSize="${folderSize/.*/}"
 		folderSize=$((folderSize + 0))
+		echo "Reducing $instNameRaw .. size: $folderSize "
 	done
 
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g')"
 	fileCount="$(ls -1q "$instrument" | wc -l | sed -e 's/ //g')" 
 	outputDir="$instNameRaw-$fileCount--$folderSize"
 	if [ ! -d "$outputDir" ]; then
-		echo "processed new $instNameRaw"
+		#echo "processed new $instNameRaw"
   		mv -f "$instrument" "$outputDir"
 	fi
 	
