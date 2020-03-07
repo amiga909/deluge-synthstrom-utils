@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sound
-	firmwareVersion="3.0.3-beta"
+	firmwareVersion="3.0.4"
 	earliestCompatibleFirmware="3.0.0"
 	polyphonic="poly"
 	voicePriority="1"
 	mode="subtractive"
-	lpfMode="24dB"
+	lpfMode="12dB"
 	modFXType="none">
 	<osc1
 		type="sample"
-		loopMode="1"
+		loopMode="0"
 		reversed="0"
 		timeStretchEnable="0"
 		timeStretchAmount="0">
-		<sampleRanges>__TEMPLATE__</sampleRanges>
+		<sampleRanges>__SAMPLE_RANGES__</sampleRanges>
 	</osc1>
 	<osc2
 		type="square"
@@ -22,7 +22,7 @@
 		retrigPhase="-1" />
 	<lfo1 type="triangle" syncLevel="0" />
 	<lfo2 type="triangle" />
-	<unison num="1" detune="8" />
+	<unison num="1" detune="1" />
 	<compressor
 		syncLevel="6"
 		attack="327244"
@@ -40,13 +40,13 @@
 		oscBVolume="0x80000000"
 		oscBPulseWidth="0x00000000"
 		noiseVolume="0x80000000"
-		volume="0x4CCCCCA8"
+		volume="0xFE000000"
 		pan="0x00000000"
-		lpfFrequency="0x7FFFFFFF"
+		lpfFrequency="0x7FFFFFD2"
 		lpfResonance="0x80000000"
 		hpfFrequency="0x80000000"
 		hpfResonance="0x80000000"
-		lfo1Rate="0x1999997E"
+		lfo1Rate="0x26000000"
 		lfo2Rate="0x00000000"
 		modulator1Amount="0x80000000"
 		modulator1Feedback="0x80000000"
@@ -54,9 +54,9 @@
 		modulator2Feedback="0x80000000"
 		carrier1Feedback="0x80000000"
 		carrier2Feedback="0x80000000"
-		modFXRate="0x00000000"
-		modFXDepth="0x00000000"
-		delayRate="0x00000000"
+		modFXRate="0xC7AE146E"
+		modFXDepth="0xAE147AD9"
+		delayRate="0xF0000000"
 		delayFeedback="0x80000000"
 		reverbAmount="0x80000000"
 		arpeggiatorRate="0x00000000"
@@ -64,17 +64,17 @@
 		sampleRateReduction="0x80000000"
 		bitCrush="0x80000000"
 		modFXOffset="0x00000000"
-		modFXFeedback="0x00000000">
+		modFXFeedback="0x1EB851CF">
 		<envelope1
 			attack="0x80000000"
 			decay="0xE6666654"
 			sustain="0x7FFFFFFF"
-			release="0x80000000" />
+			release="__RELEASE_TIME__" />
 		<envelope2
 			attack="0xE6666654"
 			decay="0xE6666654"
 			sustain="0xFFFFFFE9"
-			release="0xE6666654" />
+			release="0xCC000000" />
 		<patchCables>
 			<patchCable
 				source="velocity"
