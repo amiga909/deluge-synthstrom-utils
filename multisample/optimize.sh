@@ -5,6 +5,8 @@
 ## [PARAMS]
  # [1] = Integer; MAX_INSTRUMENT_SIZE_MB; Max allowed instrument size
 
+OIFS="$IFS"
+IFS=$'\n'
 
 MAX_INSTRUMENT_SIZE_MB=0
 if [ ! -z "$1" ]; then
@@ -166,3 +168,5 @@ done
 folderSize="$(find . -maxdepth 2 -mindepth 2  -name "*.wav" -exec du -ks {} \; | awk '{ total = total + $1 } END { print total }')" 
 folderSize=$(( folderSize / 1000 ))
 echo "All instruments size after: $folderSize MB  (size before: $folderSizeBefore MB)"
+
+IFS="$OIFS"

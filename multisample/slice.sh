@@ -3,7 +3,8 @@
 ## Convert DAW multisample recordings to Deluge multisamples
 ##
 ## https://github.com/rochars/wavefile/blob/master/lib/wavefile-tag-editor.js
-
+OIFS="$IFS"
+IFS=$'\n'
 
 if ! [ -x "$(command -v sox)" ]; then
 		echo 'Error: sox (sox.sourceforge.net) is not installed.'  
@@ -132,6 +133,8 @@ rm -rf "$TEMP_DIR"
 rm -f "$TEMP_WAV"
 
 #sh multisample-optimizesize.sh
+
+IFS="$OIFS"
 
 
 
