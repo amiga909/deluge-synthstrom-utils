@@ -51,13 +51,12 @@ libcheck() {
 workingDirCheck() {
 
 	# allow to place script in Deluge root, rather than samples folder
-	if  ! [ -d "${PWD}/SAMPLES/RESAMPLE" ]; then
-		echo "Note: If you want to process all files, place script in root directory of SD card."
-		echo "$lB"
+	if  ! [ -d "${PWD}/SAMPLES/" ]; then
+		echo "This script expects a folder 'SAMPLES' in the same directory as this script.mk"
+		exit
 	else 
 		cd "${PWD}/SAMPLES" || exit
 	fi
-
 
 	# let user input with or without slashes
 	if [ -z "$2" ]; then
@@ -267,12 +266,12 @@ cat << EOF
 
 #####Use cases
 - Analyze all data 
-`sh samplefixer.sh convert_clean`
+'sh samplefixer.sh convert_clean'
 
 - Fix all data
-`sh samplefixer.sh convert_clean_write`
+'sh samplefixer.sh convert_clean_write'
 
-Default path is the Deluge SAMPLES folder. You may pass a directory as an optional parameter. Pass it as relative path, e.g. `sh samplefixer.sh clean RESAMPLE/`, to narrow the search space. 
+Default path is the Deluge SAMPLES folder. You may pass a directory as an optional parameter. Pass it as relative path, e.g. 'sh samplefixer.sh clean RESAMPLE/', to narrow the search space. 
 
 - **convert [PATH]**
 List WAV files below 44kHz. Inspect for fishy data formats as well.
