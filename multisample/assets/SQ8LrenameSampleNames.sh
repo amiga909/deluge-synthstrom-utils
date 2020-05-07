@@ -30,8 +30,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -mindepth 1 -maxdepth 1 | sort 
 		cnt=0
 		for i in "${NOTES[@]}"; do
 			if [[ "$i" = $notename ]]; then
-				echo "$WORKING_DIR/$instrument/$cnt.${NOTES[$cnt]}.wav"
-				#mv "$wavOrig" "$WORKING_DIR/$instrument/$cnt.${NOTES[$cnt]}.wav"
+				mv "$wavOrig" "$WORKING_DIR/$instrument/$cnt.${NOTES[$cnt]}.wav"
 			fi
 			cnt=$((cnt + 1)) 
 		done

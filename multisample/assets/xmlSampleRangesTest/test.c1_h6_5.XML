@@ -14,68 +14,30 @@
 		timeStretchEnable="0"
 		timeStretchAmount="0">
 		<sampleRanges> <sampleRange
-	rangeTopNote="12"
-	fileName="SAMPLES/_stTest________/all/12.c0.wav"
-	transpose="48">
-	<zone  startSamplePos="0" endSamplePos="16480" />
-</sampleRange> <sampleRange
 	rangeTopNote="24"
-	fileName="SAMPLES/_stTest________/all/24.c1.wav"
+	fileName="SAMPLES/_stTest________/c1_h6_5/24.c1.wav"
 	transpose="36">
 	<zone  startSamplePos="0" endSamplePos="13440" />
 </sampleRange> <sampleRange
-	rangeTopNote="31"
-	fileName="SAMPLES/_stTest________/all/31.g1.wav"
-	transpose="29">
-	<zone  startSamplePos="0" endSamplePos="18400" />
-</sampleRange> <sampleRange
-	rangeTopNote="33"
-	fileName="SAMPLES/_stTest________/all/33.a1.wav"
-	transpose="27">
-	<zone  startSamplePos="0" endSamplePos="12880" />
-</sampleRange> <sampleRange
 	rangeTopNote="39"
-	fileName="SAMPLES/_stTest________/all/39.d#2.wav"
+	fileName="SAMPLES/_stTest________/c1_h6_5/39.d#2.wav"
 	transpose="21">
 	<zone  startSamplePos="0" endSamplePos="23920" />
 </sampleRange> <sampleRange
 	rangeTopNote="43"
-	fileName="SAMPLES/_stTest________/all/43.g2.wav"
+	fileName="SAMPLES/_stTest________/c1_h6_5/43.g2.wav"
 	transpose="17">
 	<zone  startSamplePos="0" endSamplePos="19840" />
 </sampleRange> <sampleRange
-	rangeTopNote="44"
-	fileName="SAMPLES/_stTest________/all/44.g#2.wav"
-	transpose="16">
-	<zone  startSamplePos="0" endSamplePos="25440" />
-</sampleRange> <sampleRange
-	rangeTopNote="48"
-	fileName="SAMPLES/_stTest________/all/48.c3.wav"
-	transpose="12">
-	<zone  startSamplePos="0" endSamplePos="21760" />
-</sampleRange> <sampleRange
 	rangeTopNote="60"
-	fileName="SAMPLES/_stTest________/all/60.c4.wav">
+	fileName="SAMPLES/_stTest________/c1_h6_5/60.c4.wav"
+	transpose="0">
 	<zone  startSamplePos="0" endSamplePos="18320" />
 </sampleRange> <sampleRange
-	rangeTopNote="85"
-	fileName="SAMPLES/_stTest________/all/85.c#6.wav"
-	transpose="-25">
-	<zone  startSamplePos="0" endSamplePos="18320" />
-</sampleRange> <sampleRange
-	rangeTopNote="95"
-	fileName="SAMPLES/_stTest________/all/95.h6.wav"
+	
+	fileName="SAMPLES/_stTest________/c1_h6_5/95.h6.wav"
 	transpose="-35">
 	<zone  startSamplePos="0" endSamplePos="21600" />
-</sampleRange> <sampleRange
-	rangeTopNote="125"
-	fileName="SAMPLES/_stTest________/all/125.f9.wav"
-	transpose="-65">
-	<zone  startSamplePos="0" endSamplePos="21680" />
-</sampleRange> <sampleRange
-	fileName="SAMPLES/_stTest________/all/127.g9.wav"
-	transpose="-67">
-	<zone  startSamplePos="0" endSamplePos="20480" />
 </sampleRange></sampleRanges>
 	</osc1>
 	<osc2

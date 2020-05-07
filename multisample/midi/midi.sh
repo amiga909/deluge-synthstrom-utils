@@ -44,7 +44,8 @@ if [ ! -z "$5" ]; then
 fi
 note_length=$((NOTE_LENGTH + SILENCE_INTERVAL))
 TOTAL_LENGTH=$(( NO_OF_NOTES * note_length ))
-TOTAL_LENGTH=$((TOTAL_LENGTH + 10))
+TOTAL_LENGTH=$((TOTAL_LENGTH + 3))
+echo "TOTAL_LENGTH: $TOTAL_LENGTH"
 
 NOTES=( )
 function note_table () {
@@ -59,20 +60,25 @@ function note_table () {
 	done
 }
 note_table
-
+#osascript -e 'tell application "QuickTime Player"' -e 'tell application "QuickTime Player" to start (new audio recording)'
 
 sendmidi dev "$OUTPUT_PORT" panic
 
-presetCnt=1
+presetCnt=8
 #amoeba: distort percvib tranperc rotperc darc spooky
 #anamark ( basedrum deepbasedrum highbass heavyattack pseudodelaybass electricbass modulatedbass crazybass )
-presetNames=( deepbasedrum highbass heavyattack pseudodelaybass electricbass modulatedbass crazybass )
+presetNames=( lightdirtybass electricattackbass quasisquarebass synpad rezzvoice quintpadorsitar easternlead bassandbase overdrive )
 for presetName in "${presetNames[@]}"; do
 	echo "----------------------------------"
-	echo "init recording: $presetName"
+	echo "Init recording: $presetName"
+	osascript  -e 'tell application "QuickTime Player" to activate'
+	osascript  -e 'tell application "VFX.VstLoaderWine" to activate'
+	echo "waiting 10s to open VFX and QT"
+	sleep 10
 	sendmidi dev "$OUTPUT_PORT" pc "$presetCnt"
-	osascript QTRecord.scpt "$presetName" "$TOTAL_LENGTH" & 
-	sleep 5
+	osascript  -e 'tell application "QuickTime Player" to start (new audio recording)'
+	echo "waiting 2s to init audio recording"
+	sleep 2
 	presetCnt=$((presetCnt + 1))	
 	cnt=0
 	for ((i=START_NOTE; i<START_NOTE+NO_OF_NOTES;i++)); 
@@ -81,16 +87,26 @@ for presetName in "${presetNames[@]}"; do
 	   echo "${NOTES[$i]} ($cnt out of $NO_OF_NOTES)"
 	   sendmidi dev "$OUTPUT_PORT" on "$i" "$VELOCITY"
 	   sleep "$NOTE_LENGTH"
-	   sendmidi dev "$OUTPUT_PORT" off "$i" "$VELOCITY"
+	   # noteOff velocity = 64: http://midi.teragonaudio.com/tech/midispec/noteoff.htm
+	   sendmidi dev "$OUTPUT_PORT" off "$i" 64
 	   sleep "$SILENCE_INTERVAL"
 	done
-	echo "done midi, wait 60s for QT to catch up for next recording.."
-	sleep 60
-	if ls *$presetName*.m4a 1> /dev/null 2>&1; then
-    	echo "Recording done"
-	else
-	    echo "Error: Recording for $presetName does not exist"
-	fi
+
+	#osascript  -e 'tell application "QuickTime Player" to stop the front document'	
+
+	sleep 1 
+	osascript  -e 'tell application "VFX.VstLoaderWine" to quit'
+	osascript QTSaveRecord.scpt "$presetName"
+	echo "Wait 30s for QT to export"
+	sleep 30
+	osascript  -e 'tell application "QuickTime Player" to quit without saving'
+	echo "Done. Wait 10s for shutting down VFX and QT"
+	sleep 10
+	#if ls *$presetName*.m4a 1> /dev/null 2>&1; then
+    #	echo "Recording done"
+	#else
+	#    echo "Error: Recording for $presetName does not exist"
+	#fi
 done
 
 

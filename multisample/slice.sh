@@ -132,8 +132,6 @@ echo "All instruments size: $folderSize"
 rm -rf "$TEMP_DIR"
 rm -f "$TEMP_WAV"
 
-#sh multisample-optimizesize.sh
-
 IFS="$OIFS"
 
 

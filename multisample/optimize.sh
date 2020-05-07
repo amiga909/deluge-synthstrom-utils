@@ -99,7 +99,6 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 -iname '*--skip*' |
 done
 
 
-
 # 2) Remove every 2nd sample until size limit met
 for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	if [ $instrument = './' ]; then
@@ -107,6 +106,11 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 	fi  
 	instName=$(basename -- "$instrument")
 	instNameRaw="${instName/-*/}"
+	if [[ $instNameRaw =~ "x." ]]; then
+		maxInstSize=$((MAX_INSTRUMENT_SIZE_MB - 8))
+	else 
+		maxInstSize=$((MAX_INSTRUMENT_SIZE_MB + 0))
+	fi
 	folderSize="$(du -hs $instrument | cut -f1 | sed -e 's/ //g' | sed -e 's/M//g' | sed -e 's/K//g')"
 	# remove float, cast to int
 	folderSize="${folderSize/.*/}"
@@ -114,7 +118,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 
 	# remove every second note in every octave until max size reached
 	removeCounter=0
-	while [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" && "10" -gt "$removeCounter" ]]; do
+	while [[ "$folderSize" -gt "$maxInstSize" && "10" -gt "$removeCounter" ]]; do
 		removeCounter=$((removeCounter + 1))
 		wavCount=0
 		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -h ); do
@@ -129,7 +133,7 @@ for instrument in $(find "$WORKING_DIR/" -type d -maxdepth 1 | sort ); do
 		folderSize=$((folderSize + 0))
 
 
-		if [[ "$folderSize" -gt "$MAX_INSTRUMENT_SIZE_MB" ]]; then
+		if [[ "$folderSize" -gt "$maxInstSize" ]]; then
 			# shake off very high octave notes first, usually not a sweet spot
 			i=0
 			for i in "${octave[@]}"; do

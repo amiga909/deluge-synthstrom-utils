@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sound
+	firmwareVersion="3.0.4"
+	earliestCompatibleFirmware="3.0.0"
+	polyphonic="poly"
+	voicePriority="1"
+	mode="subtractive"
+	lpfMode="12dB"
+	modFXType="none">
+	<osc1
+		type="sample"
+		loopMode="0"
+		reversed="0"
+		timeStretchEnable="0"
+		timeStretchAmount="0">
+		<sampleRanges> <sampleRange
+	rangeTopNote="12"
+	fileName="SAMPLES/_stTest________/c0_g9_16/12.c0.wav"
+	transpose="48">
+	<zone  startSamplePos="0" endSamplePos="16480" />
+</sampleRange> <sampleRange
+	rangeTopNote="24"
+	fileName="SAMPLES/_stTest________/c0_g9_16/24.c1.wav"
+	transpose="36">
+	<zone  startSamplePos="0" endSamplePos="13440" />
+</sampleRange> <sampleRange
+	rangeTopNote="31"
+	fileName="SAMPLES/_stTest________/c0_g9_16/31.g1.wav"
+	transpose="29">
+	<zone  startSamplePos="0" endSamplePos="18400" />
+</sampleRange> <sampleRange
+	rangeTopNote="33"
+	fileName="SAMPLES/_stTest________/c0_g9_16/33.a1.wav"
+	transpose="27">
+	<zone  startSamplePos="0" endSamplePos="12880" />
+</sampleRange> <sampleRange
+	rangeTopNote="39"
+	fileName="SAMPLES/_stTest________/c0_g9_16/39.d#2.wav"
+	transpose="21">
+	<zone  startSamplePos="0" endSamplePos="23920" />
+</sampleRange> <sampleRange
+	rangeTopNote="40"
+	fileName="SAMPLES/_stTest________/c0_g9_16/40.e2.wav"
+	transpose="20">
+	<zone  startSamplePos="0" endSamplePos="18080" />
+</sampleRange> <sampleRange
+	rangeTopNote="43"
+	fileName="SAMPLES/_stTest________/c0_g9_16/43.g2.wav"
+	transpose="17">
+	<zone  startSamplePos="0" endSamplePos="19840" />
+</sampleRange> <sampleRange
+	rangeTopNote="44"
+	fileName="SAMPLES/_stTest________/c0_g9_16/44.g#2.wav"
+	transpose="16">
+	<zone  startSamplePos="0" endSamplePos="25440" />
+</sampleRange> <sampleRange
+	rangeTopNote="48"
+	fileName="SAMPLES/_stTest________/c0_g9_16/48.c3.wav"
+	transpose="12">
+	<zone  startSamplePos="0" endSamplePos="21760" />
+</sampleRange> <sampleRange
+	rangeTopNote="56"
+	fileName="SAMPLES/_stTest________/c0_g9_16/56.g#3.wav"
+	transpose="4">
+	<zone  startSamplePos="0" endSamplePos="28800" />
+</sampleRange> <sampleRange
+	rangeTopNote="60"
+	fileName="SAMPLES/_stTest________/c0_g9_16/60.c4.wav"
+	transpose="0">
+	<zone  startSamplePos="0" endSamplePos="18320" />
+</sampleRange> <sampleRange
+	rangeTopNote="72"
+	fileName="SAMPLES/_stTest________/c0_g9_16/72.c5.wav"
+	transpose="-12">
+	<zone  startSamplePos="0" endSamplePos="20320" />
+</sampleRange> <sampleRange
+	rangeTopNote="85"
+	fileName="SAMPLES/_stTest________/c0_g9_16/85.c#6.wav"
+	transpose="-25">
+	<zone  startSamplePos="0" endSamplePos="18320" />
+</sampleRange> <sampleRange
+	rangeTopNote="95"
+	fileName="SAMPLES/_stTest________/c0_g9_16/95.h6.wav"
+	transpose="-35">
+	<zone  startSamplePos="0" endSamplePos="21600" />
+</sampleRange> <sampleRange
+	rangeTopNote="125"
+	fileName="SAMPLES/_stTest________/c0_g9_16/125.f9.wav"
+	transpose="-65">
+	<zone  startSamplePos="0" endSamplePos="21680" />
+</sampleRange> <sampleRange
+	
+	fileName="SAMPLES/_stTest________/c0_g9_16/127.g9.wav"
+	transpose="-67">
+	<zone  startSamplePos="0" endSamplePos="20480" />
+</sampleRange></sampleRanges>
+	</osc1>
+	<osc2
+		type="square"
+		transpose="0"
+		cents="0"
+		retrigPhase="-1" />
+	<lfo1 type="triangle" syncLevel="0" />
+	<lfo2 type="triangle" />
+	<unison num="1" detune="1" />
+	<compressor
+		syncLevel="6"
+		attack="327244"
+		release="936" />
+	<delay
+		pingPong="1"
+		analog="0"
+		syncLevel="7" />
+	<defaultParams
+		arpeggiatorGate="0x00000000"
+		portamento="0x80000000"
+		compressorShape="0xDC28F5B2"
+		oscAVolume="0x7FFFFFFF"
+		oscAPulseWidth="0x00000000"
+		oscBVolume="0x80000000"
+		oscBPulseWidth="0x00000000"
+		noiseVolume="0x80000000"
+		volume="0xFE000000"
+		pan="0x00000000"
+		lpfFrequency="0x7FFFFFD2"
+		lpfResonance="0x80000000"
+		hpfFrequency="0x80000000"
+		hpfResonance="0x80000000"
+		lfo1Rate="0x26000000"
+		lfo2Rate="0x00000000"
+		modulator1Amount="0x80000000"
+		modulator1Feedback="0x80000000"
+		modulator2Amount="0x80000000"
+		modulator2Feedback="0x80000000"
+		carrier1Feedback="0x80000000"
+		carrier2Feedback="0x80000000"
+		modFXRate="0xC7AE146E"
+		modFXDepth="0xAE147AD9"
+		delayRate="0xF0000000"
+		delayFeedback="0x80000000"
+		reverbAmount="0x80000000"
+		arpeggiatorRate="0x00000000"
+		stutterRate="0x00000000"
+		sampleRateReduction="0x80000000"
+		bitCrush="0x80000000"
+		modFXOffset="0x00000000"
+		modFXFeedback="0x1EB851CF">
+		<envelope1
+			attack="0x80000000"
+			decay="0xE6666654"
+			sustain="0x7FFFFFFF"
+			release="0xB333332A" />
+		<envelope2
+			attack="0xE6666654"
+			decay="0xE6666654"
+			sustain="0xFFFFFFE9"
+			release="0xCC000000" />
+		<patchCables>
+			<patchCable
+				source="velocity"
+				destination="volume"
+				amount="0x3FFFFFE8" />
+		</patchCables>
+		<equalizer
+			bass="0x00000000"
+			treble="0x00000000"
+			bassFrequency="0x00000000"
+			trebleFrequency="0x00000000" />
+	</defaultParams>
+	<arpeggiator
+		mode="off"
+		numOctaves="2"
+		syncLevel="7" />
+	<modKnobs>
+		<modKnob controlsParam="pan" />
+		<modKnob controlsParam="volumePostFX" />
+		<modKnob controlsParam="lpfResonance" />
+		<modKnob controlsParam="lpfFrequency" />
+		<modKnob controlsParam="env1Release" />
+		<modKnob controlsParam="env1Attack" />
+		<modKnob controlsParam="delayFeedback" />
+		<modKnob controlsParam="delayRate" />
+		<modKnob controlsParam="reverbAmount" />
+		<modKnob controlsParam="volumePostReverbSend" patchAmountFromSource="compressor" />
+		<modKnob controlsParam="pitch" patchAmountFromSource="lfo1" />
+		<modKnob controlsParam="lfo1Rate" />
+		<modKnob controlsParam="portamento" />
+		<modKnob controlsParam="stutterRate" />
+		<modKnob controlsParam="bitcrushAmount" />
+		<modKnob controlsParam="sampleRateReduction" />
+	</modKnobs>
+</sound>

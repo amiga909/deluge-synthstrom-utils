@@ -15,11 +15,11 @@ fi
 if [ ! -z "$1" ]; then
 	DELUGE_SAMPLES_ROOT="$1"  
 else 
-	DELUGE_SAMPLES_ROOT="SAMPLES/3thparty/amiga909.multisamples/sunrizer-beepstreet-25mb"
+	DELUGE_SAMPLES_ROOT="SAMPLES/_stTest________"
 fi
 
 WORKING_DIR="./"
-DELUGE_PRESET_NAMESPACE="9"
+DELUGE_PRESET_NAMESPACE="l"
 
 # map Deluge 0-50, fixh format, https://docs.google.com/document/d/11DUuuE1LBYOVlluPA9McT1_dT4AofZ5jnUD5eHvj7Vs/edit
 paramVals=(0x80000000 0x851EB851 0x8A3D70A2 0x8F5C28F3 0x947AE144 0x99999995 0x9EB851E6 0xA3D70A37 0xA8F5C288 0xAE147AD9 0xB333332A 0xB851EB7B 0xBD70A3CC 0xC28F5C1D 0xC7AE146E 0xCCCCCCBF 0xD1EB8510 0xD70A3D61 0xDC28F5B2 0xE147AE03 0xE6666654 0xEB851EA5 0xF0A3D6F6 0xF5C28F47 0xFAE14798 0x00000000 0x051EB83A 0x0A3D708B 0x0F5C28DC 0x147AE12D 0x1999997E 0x1EB851CF 0x23D70A20 0x28F5C271 0x2E147AC2 0x33333313 0x3851EB64 0x3D70A3B5 0x428F5C06 0x47AE1457 0x4CCCCCA8 0x51EB84F9 0x570A3D4A 0x5C28F59B 0x6147ADEC 0x6666663D 0x6B851E8E 0x70A3D6DF 0x75C28F30 0x7AE14781 0x7FFFFFD2)
@@ -50,7 +50,13 @@ for instrument in $(find "$WORKING_DIR/" -type d -mindepth 1 -maxdepth 1 | sort 
 
 
 	if [ "$hasValidFilenames" = true ]; then
+		wavTotalCount=0
 		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -V ); do
+			wavTotalCount=$(($wavTotalCount + 1))
+		done
+		wavCount=0
+		for wav in $(find "$instrument" -type f -maxdepth 1 -iname '*.wav' | sort -V ); do
+			wavCount=$(($wavCount + 1))
 			name=$(basename "$wav")
 			rangeTopNote=0
 			fileName="$DELUGE_SAMPLES_ROOT/$instName/$name"
@@ -60,18 +66,25 @@ for instrument in $(find "$WORKING_DIR/" -type d -mindepth 1 -maxdepth 1 | sort 
 
 			midiNo="${name/.*/}"
 			midiNo=$((midiNo + 0))
+			rangeTopNote=$(($midiNo)) # omit if last
+			transpose=$((60 - $midiNo)) # if 0 omit
 
-			rangeTopNote=$(($midiNo + 12)) # omit if last
-			transpose=$((48 - $midiNo)) # if 0 omit
+			rangeTopNoteStr=$(cat <<EOF
+rangeTopNote="$rangeTopNote"
+EOF)
+			if [[ $wavCount = $wavTotalCount ]]; then
+				rangeTopNoteStr=""
+			fi
 
 			sampleRangesStr=$(cat <<EOF
 $sampleRangesStr <sampleRange
-	rangeTopNote="$rangeTopNote"
+	$rangeTopNoteStr
 	fileName="$fileName"
 	transpose="$transpose">
 	<zone  startSamplePos="$startSamplePos" endSamplePos="$endSamplePos" />
 </sampleRange>
 EOF)
+
 		done
 
 		
