@@ -16,9 +16,20 @@ if ! [ -x "$(command -v sendmidi)" ]; then
 	  	exit 1
 fi
 
+if ! [ -x "$(command -v ffmpeg)" ]; then
+		echo 'Error: Install ffmpeg'  
+	  	exit 1
+fi
+if ! [ -x "$(command -v sox)" ]; then
+		echo 'Error: Install sox'  
+	  	exit 1
+fi
+
+RECORDINGS_FOLDER="./recordings"
+mkdir -p $RECORDINGS_FOLDER
 NO_OF_NOTES=96
 START_NOTE=12
-NOTE_LENGTH=6
+NOTE_LENGTH=8
 SILENCE_INTERVAL=5 
 VELOCITY=100
 
@@ -26,7 +37,6 @@ OUTPUT_PORT=""
 if [ -z "$1" ]; then
 	echo "Choose Output Port from 'sendmidi list'"
 	echo $(sendmidi list)
-	exit 1
 fi
 OUTPUT_PORT="$1"  
 
@@ -42,14 +52,9 @@ fi
 if [ ! -z "$5" ]; then
 	START_NOTE="$5"
 fi
-note_length=$((NOTE_LENGTH + SILENCE_INTERVAL))
-TOTAL_LENGTH=$(( NO_OF_NOTES * note_length ))
-TOTAL_LENGTH=$((TOTAL_LENGTH + 3))
-echo "TOTAL_LENGTH: $TOTAL_LENGTH"
 
 NOTES=( )
 function note_table () {
-	#deluge note names
    	octave=( c c# d d# e f f# g g# a a# h )
 	count=0
 	for count in {0..10}; do
@@ -60,7 +65,6 @@ function note_table () {
 	done
 }
 note_table
-#osascript -e 'tell application "QuickTime Player"' -e 'tell application "QuickTime Player" to start (new audio recording)'
 
 sendmidi dev "$OUTPUT_PORT" panic
 
@@ -68,15 +72,29 @@ presetCnt=8
 #amoeba: distort percvib tranperc rotperc darc spooky
 #anamark ( basedrum deepbasedrum highbass heavyattack pseudodelaybass electricbass modulatedbass crazybass )
 presetNames=( lightdirtybass electricattackbass quasisquarebass synpad rezzvoice quintpadorsitar easternlead bassandbase overdrive )
+
+segment=$((NOTE_LENGTH + SILENCE_INTERVAL))
+totalDuration=$(( NO_OF_NOTES * segment ))
+totalDuration=$(( ${#presetNames[@] - presetCnt} * totalDuration ))
+printf 'totalDuration %dh:%dm:%ds\n' $(($totalDuration/3600)) $(($totalDuration%3600/60)) $(($totalDuration%60))
+
 for presetName in "${presetNames[@]}"; do
 	echo "----------------------------------"
 	echo "Init recording: $presetName"
-	osascript  -e 'tell application "QuickTime Player" to activate'
+	ffmpgPID="$(ps | grep -v grep | grep ffmpeg | awk '{print $1}')"
+	if [[ $ffmpgPID -gt 0 ]]; then
+		kill  $ffmpgPID
+		echo "Error: ffmpeg was still running"
+		exit 	
+	fi
 	osascript  -e 'tell application "VFX.VstLoaderWine" to activate'
-	echo "waiting 10s to open VFX and QT"
-	sleep 10
+	echo "waiting 5s to open VFX"
+	sleep 5
 	sendmidi dev "$OUTPUT_PORT" pc "$presetCnt"
-	osascript  -e 'tell application "QuickTime Player" to start (new audio recording)'
+	echo "waiting 2s to change Midi PC"
+	sleep 2
+	# -y: force overwrite
+	ffmpeg -f avfoundation -y -i ":0" "$RECORDINGS_FOLDER/$presetName".wav &
 	echo "waiting 2s to init audio recording"
 	sleep 2
 	presetCnt=$((presetCnt + 1))	
@@ -92,24 +110,31 @@ for presetName in "${presetNames[@]}"; do
 	   sleep "$SILENCE_INTERVAL"
 	done
 
-	#osascript  -e 'tell application "QuickTime Player" to stop the front document'	
-
 	sleep 1 
 	osascript  -e 'tell application "VFX.VstLoaderWine" to quit'
-	osascript QTSaveRecord.scpt "$presetName"
-	echo "Wait 30s for QT to export"
-	sleep 30
-	osascript  -e 'tell application "QuickTime Player" to quit without saving'
-	echo "Done. Wait 10s for shutting down VFX and QT"
-	sleep 10
-	#if ls *$presetName*.m4a 1> /dev/null 2>&1; then
-    #	echo "Recording done"
-	#else
-	#    echo "Error: Recording for $presetName does not exist"
-	#fi
+	ffmpgPID="$(ps | grep -v grep | grep ffmpeg | awk '{print $1}')"
+	if [[ $ffmpgPID -gt 0 ]]; then
+		kill  $ffmpgPID
+	else 
+		echo "Error: something wrent wrong recording $presetName"
+		exit
+	fi
+
+	echo "Wait 5s for shutting down VFX and ffmpeg"
+	sleep 5
+
+	if ls $RECORDINGS_FOLDER/*$presetName*.wav 1> /dev/null 2>&1; then
+    	echo "Done recording $presetName.wav"
+	else
+	    echo "Error: Recording for $presetName does not exist"
+	    exit
+	fi
+	sox "$RECORDINGS_FOLDER/$presetName.wav" --norm="-1" "$RECORDINGS_FOLDER/$presetName-normalized.wav" ;
 done
 
 
 
 IFS="$OIFS"
 exit 1
+
+#https://github.com/madskjeldgaard/sox-tricks/blob/master/.sox_tricks
