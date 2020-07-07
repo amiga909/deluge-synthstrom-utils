@@ -14,7 +14,7 @@
   "x2js": "^3.2.1"
  },
  "devDependencies": {
-  "electron": "^2.0.0",
+  "electron": "^9.1.0",
   "electron-packager": "^12.1.0",
   "electron-reload": "^1.2.5"
  },
