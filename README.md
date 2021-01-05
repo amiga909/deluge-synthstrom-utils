@@ -1,5 +1,11 @@
 
-# Synthstrom Deluge maintenance utils
+# Synthstrom Deluge utils
+
+## Multisample
+### Platforms
+- Mac OSX
+Splits recordings of multisamples into .WAV files for every note.
+Creates Deluge multisample XML preset files from folders (.WAV files)
 
 ## Fix missing samples
 ### Platforms
