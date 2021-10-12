@@ -2,18 +2,20 @@ const fs = require("fs"),
 	path = require("path");
 const helpers = require('./xml-helpers')
 
-
+const MIN_SAMPLE_LENGTH = 3; //3; 
+const DELETE_MIN_SAMPLE_SOURCE = true;
 const DELUGE_SAMPLES_ROOT = "SAMPLES/multis/emu"
-const PROCESSING_FOLDER = "XLead"
+const PROCESSING_FOLDER = "WorldExp"
+const DELUGE_PRESET_NAMESPACE = "eW"
+
+const XML_EXPORT_FOLDER = "XML";
 const ROOT_FOLDER = __dirname
 const WORKING_DIR = __dirname + "/" + PROCESSING_FOLDER
-const DELUGE_PRESET_NAMESPACE = "eX"
 const TEMPLATE = fs.readFileSync(__dirname + "/template.XML", 'utf8');
-
-
 const TEMPLATE_JSON = helpers.toJson(TEMPLATE)
-
-
+const stats = {
+	lengths: {}
+};
 
 let dirs = fs.readdirSync(WORKING_DIR, {
 	withFileTypes: true
@@ -28,7 +30,7 @@ const WaveFile = require('wavefile').WaveFile;
 
 dirs.forEach(category => {
 	let currentPath = WORKING_DIR + "/" + category.name;
-	//console.log("currentPath", currentPath);
+	console.log("category", currentPath);
 	wavFolders = fs.readdirSync(currentPath, {
 		withFileTypes: true
 	});
@@ -36,7 +38,7 @@ dirs.forEach(category => {
 		return d.isDirectory();
 	});
 	wavFolders.forEach(wavFolder => {
-		console.log("------- " + wavFolder.name);
+
 
 		let wavs = fs.readdirSync(currentPath + "/" + wavFolder.name, {
 			withFileTypes: true
@@ -49,11 +51,13 @@ dirs.forEach(category => {
 			return w.name
 		}))
 
+		let lengthRange = 0;
 		wavs.forEach(wav => {
 			const buffer = fs.readFileSync(currentPath + "/" + wavFolder.name + "/" + wav.name);
 			const waveFile = new WaveFile();
 			waveFile.fromBuffer(buffer);
 			const sampleLength = Math.floor(waveFile.chunkSize / 4) // - 10;
+			lengthRange = Math.floor((sampleLength / 100000) * 2.5);
 			const midiNo = helpers.getMidiNoFromFilename(wav.name, commonSubstring);
 			const payload = {
 				sampleRange: {
@@ -69,17 +73,31 @@ dirs.forEach(category => {
 			}
 			ranges.push(payload)
 		});
-		// rewrite samplerange
 		ranges.sort((a, b) => (a._rangeTopNote > b._rangeTopNote) ? 1 : ((b._rangeTopNote > a._rangeTopNote) ? -1 : 0))
 		const newXmlFile = TEMPLATE_JSON;
-		newXmlFile.sound.osc1.sampleRanges = ranges; // .sampleRange
 
-
+		newXmlFile.sound.osc1.sampleRanges = ranges; 
 		newXmlFile.sound.defaultParams.envelope1.release = helpers.getDelugeReleaseTime(category.name);
-		helpers.writeXmlFile(newXmlFile, `${ROOT_FOLDER}/XML/${DELUGE_PRESET_NAMESPACE}.${category.name.substring(0, category.name.length - 1)}.${wavFolder.name}`)
+
+		stats.lengths[lengthRange] = stats.lengths[lengthRange] ? stats.lengths[lengthRange] + 1 : 1;
+		if (lengthRange > MIN_SAMPLE_LENGTH) {
+			const xmlFileName = `${ROOT_FOLDER}/${XML_EXPORT_FOLDER}/${DELUGE_PRESET_NAMESPACE}.${category.name.substring(0, category.name.length - 1)}.${wavFolder.name}`
+			helpers.writeXmlFile(newXmlFile, xmlFileName)
+		} else {
+			if (DELETE_MIN_SAMPLE_SOURCE) {
+				console.log("delete samples: ", currentPath + "/" + wavFolder.name);
+				fs.rmdirSync(currentPath + "/" + wavFolder.name, { recursive: true });
+			} else {
+				console.log(`skipped ${category.name}/${wavFolder.name}, lengthRange: ${lengthRange}`);
+			}
+		}
+
+
 	});
+	console.log("stats", stats);
 
 });
+
 
 function common_substring(data) {
 	var i, ch, memo, idx = 0
