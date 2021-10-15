@@ -2,11 +2,11 @@ const fs = require("fs"),
 	path = require("path");
 const helpers = require('./xml-helpers')
 
-const MIN_SAMPLE_LENGTH = 3; //3; 
-const DELETE_MIN_SAMPLE_SOURCE = true;
-const DELUGE_SAMPLES_ROOT = "SAMPLES/multis/emu"
-const PROCESSING_FOLDER = "WorldExp"
-const DELUGE_PRESET_NAMESPACE = "eW"
+const MIN_SAMPLE_LENGTH = 0; //3; 
+const DELETE_MIN_SAMPLE_SOURCE = false;
+const DELUGE_SAMPLES_ROOT = "SAMPLES"
+const PROCESSING_FOLDER = "Loopop_Superbooth"
+const DELUGE_PRESET_NAMESPACE = "lo"
 
 const XML_EXPORT_FOLDER = "XML";
 const ROOT_FOLDER = __dirname
@@ -58,7 +58,7 @@ dirs.forEach(category => {
 			waveFile.fromBuffer(buffer);
 			const sampleLength = Math.floor(waveFile.chunkSize / 4) // - 10;
 			lengthRange = Math.floor((sampleLength / 100000) * 2.5);
-			const midiNo = helpers.getMidiNoFromFilename(wav.name, commonSubstring);
+			const midiNo = helpers.getMidiNoFromFilenameLoopop(wav.name, commonSubstring);
 			const payload = {
 				sampleRange: {
 					zone: {

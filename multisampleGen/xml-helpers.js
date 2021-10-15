@@ -166,3 +166,14 @@ exports.getMidiNoFromFilename = function(fileName, commonSubstring) {
     return midiNo;
 
 }
+
+exports.getMidiNoFromFilenameLoopop = function(fileName) {
+    let name = fileName.replace(".wav", "")
+    const noteRegex = new RegExp(/-[0-9]{2}-/);
+    const match = noteRegex.exec(name);
+    let midiNo = parseInt(match[0].replace("-", ""), 10) 
+   
+    return midiNo;
+
+}
+
